@@ -46,7 +46,7 @@ export function Cart({ cartItems, onUpdateQuantity, onRemoveItem }: CartProps) {
                   key={item.id}
                   className="bg-white rounded-lg shadow-md p-4 sm:p-6 flex flex-col sm:flex-row gap-4"
                 >
-                  <div className="w-full sm:w-24 h-32 flex-shrink-0">
+                  <div className="w-full sm:w-24 h-32 shrink-0">
                     <img
                       src={item.image}
                       alt={item.title}

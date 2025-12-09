@@ -90,7 +90,7 @@ export function LandingPage() {
                 key={book.id}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className="aspect-[3/4] overflow-hidden bg-secondary/20">
+                <div className="aspect-3/4 overflow-hidden bg-secondary/20">
                   <img
                     src={book.image}
                     alt={book.title}

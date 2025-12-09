@@ -1,4 +1,4 @@
-import { BookOpen, ShoppingCart, User, Menu, X } from 'lucide-react';
+import { BookOpen, ShoppingCart, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -80,7 +80,7 @@ export function Navbar({ cartCount = 0 }: NavbarProps) {
             </Link>
             <Link
               to="/cart"
-              className="block py-2 hover:opacity-80 transition-opacity flex items-center gap-2"
+              className="py-2 hover:opacity-80 transition-opacity flex items-center gap-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               <ShoppingCart className="h-5 w-5" />

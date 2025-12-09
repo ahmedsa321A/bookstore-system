@@ -11,7 +11,7 @@ import {
   LogOut,
   BookOpen,
 } from 'lucide-react';
-import { LogoutModal } from './LogoutModal';
+import { LogoutModal } from '../components/LogoutModal';
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);

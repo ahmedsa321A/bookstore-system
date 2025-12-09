@@ -5,7 +5,6 @@ import {
   FileText,
   ShoppingBag,
   Menu,
-  X,
   Trash2,
   Package,
 } from 'lucide-react';

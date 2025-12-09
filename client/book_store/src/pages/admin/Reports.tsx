@@ -185,7 +185,7 @@ export function Reports() {
                 key={customer.name}
                 className="flex items-center gap-4 p-4 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors"
               >
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center">
+                <div className="shrink-0 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center">
                   <span className="text-xl">#{index + 1}</span>
                 </div>
                 <div className="flex-1">

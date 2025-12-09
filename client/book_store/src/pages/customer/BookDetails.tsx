@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft, Package, CheckCircle, XCircle } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import { books } from '../../data/books';
 import type { Book } from '../../data/books';
 
@@ -42,7 +42,7 @@ export function BookDetails({ onAddToCart }: BookDetailsProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-8">
           {/* Book Image */}
           <div>
-            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-secondary/20">
+            <div className="aspect-3/4 rounded-lg overflow-hidden bg-secondary/20">
               <img src={book.image} alt={book.title} className="w-full h-full object-cover" />
             </div>
           </div>

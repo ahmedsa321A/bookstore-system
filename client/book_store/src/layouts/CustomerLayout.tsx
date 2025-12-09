@@ -10,7 +10,7 @@ import {
   LogOut,
   BookOpen,
 } from 'lucide-react';
-import { LogoutModal } from './LogoutModal';
+import { LogoutModal } from '../components/LogoutModal';
 
 interface CustomerLayoutProps {
   cartCount: number;
