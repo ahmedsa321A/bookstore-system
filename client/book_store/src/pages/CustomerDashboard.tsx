@@ -17,7 +17,7 @@ export function CustomerDashboard({ onAddToCart }: CustomerDashboardProps) {
   const filteredBooks = allBooks.filter((book) => {
     const matchesSearch =
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase());
+      book.authors.some((author) => author.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === 'All' || book.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });

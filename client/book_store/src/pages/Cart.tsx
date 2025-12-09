@@ -58,7 +58,7 @@ export function Cart({ cartItems, onUpdateQuantity, onRemoveItem }: CartProps) {
                     <div className="flex justify-between mb-2">
                       <div>
                         <h3 className="mb-1">{item.title}</h3>
-                        <p className="text-muted-foreground">{item.author}</p>
+                        <p className="text-muted-foreground">{item.authors}</p>
                         <span className="inline-block mt-2 px-2 py-1 bg-secondary text-secondary-foreground rounded text-sm">
                           {item.category}
                         </span>

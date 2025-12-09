@@ -251,7 +251,7 @@ export function AdminDashboard() {
                       {books.map((book) => (
                         <tr key={book.id} className="hover:bg-secondary/30">
                           <td className="px-6 py-4">{book.title}</td>
-                          <td className="px-6 py-4">{book.author}</td>
+                          <td className="px-6 py-4">{book.authors}</td>
                           <td className="px-6 py-4">
                             <span className="inline-block px-2 py-1 bg-secondary rounded text-sm">
                               {book.category}
