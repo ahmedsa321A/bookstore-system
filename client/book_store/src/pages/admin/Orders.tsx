@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
-import { books, publisherOrders } from '../../data/book';
+import { books, publisherOrders } from '../../types/book';
 
 export function Orders() {
   const [activeTab, setActiveTab] = useState<'auto' | 'confirm'>('auto');

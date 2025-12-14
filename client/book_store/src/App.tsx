@@ -16,7 +16,7 @@ import { ShoppingCart } from './pages/customer/ShoppingCart';
 import { Checkout } from './pages/customer/Checkout';
 import { PastOrders } from './pages/customer/PastOrders';
 import { EditProfile } from './pages/customer/EditProfile';
-import type { Book } from './data/book';
+import type { Book } from './types/book';
 
 interface CartItem extends Book {
   quantity: number;

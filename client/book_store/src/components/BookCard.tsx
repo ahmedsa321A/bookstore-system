@@ -1,4 +1,4 @@
-import type { Book } from '../data/book';
+import type { Book } from '../types/book';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

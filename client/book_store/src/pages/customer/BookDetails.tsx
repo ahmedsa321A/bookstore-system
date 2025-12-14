@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
-import { books } from '../../data/book';
-import type { Book } from '../../data/book';
+import { books } from '../../types/book';
+import type { Book } from '../../types/book';
 
 interface BookDetailsProps {
   onAddToCart: (book: Book) => void;

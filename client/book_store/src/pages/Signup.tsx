@@ -1,21 +1,26 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, UserPlus } from "lucide-react";
-import type { SignupErrors } from "../data/signup";
+import type { SignupErrors } from "../types/signup";
 import { validateSignup } from "../utils/helper";
 import AlertCard from "../components/AlertCard";
-import FormInput from "../components/Forminput";
+import FormInput from "../components/FormInput";
+import type { SignupRequest } from "../types/auth";
+import { CustomButton } from "../components/CustomButton";
+import authService from "../api/authService";
+
 export function Signup() {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+  const [formData, setFormData] = useState<SignupRequest>({
+    first_name: "",
+    last_name: "",
     username: "",
     email: "",
     password: "",
     phone: "",
-    shippingAddress: "",
+    address: "",
   });
 
+  // Ensure your SignupErrors type allows string indexing for the clear logic to work
   const [errors, setErrors] = useState<SignupErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState<{
@@ -23,16 +28,19 @@ export function Signup() {
     title?: string;
     message: string;
   } | null>(null);
-
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAlert(null); // Clear previous alerts
+    setIsSubmitting(true); // START LOADING
 
+    // 1. Validate
     const newErrors: SignupErrors = {};
     validateSignup({ ...formData, errors: newErrors });
 
-    // ✅ FIXED: check newErrors
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setAlert({
@@ -40,30 +48,55 @@ export function Signup() {
         title: "Form Error",
         message: "Please fix the highlighted fields and try again.",
       });
+      setIsSubmitting(false); // STOP LOADING if validation fails
       return;
     }
 
-    console.log("Form Data Submitted:", formData);
-
-    setAlert({
-      variant: "success",
-      title: "Account Created",
-      message: "Your account has been created successfully ",
-    });
-
-    setTimeout(() => {
-      navigate("/customer");
-    }, 2000);
+    // 2. Submit
+    try {
+      const message = await authService.signup(formData);
+      if (message) {
+        setAlert({
+          variant: "success",
+          title: "Account Created",
+          message: "Your account has been created successfully. Redirecting...",
+        });
+      }
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+      
+    } catch (error: any) {
+      // Error Handling
+      setIsSubmitting(false); // STOP LOADING on error
+      console.error("Signup error:", error);
+      setAlert({
+        variant: "error",
+        title: "Signup Failed",
+        message:
+          error.response?.data?.message || 
+          error.response?.data ||
+          "An error occurred during signup. Please try again.",
+      });
+    }
+    // Note: We do NOT put setIsSubmitting(false) in 'finally' 
+    // because we want the spinner to keep going if we are redirecting on success.
   };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    setErrors((prev) => ({ ...prev, [e.target.name]: undefined }));
+    const { name, value } = e.target;
+    
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // FIXED: Clear the specific error for this field immediately
+    if (errors[name as keyof SignupErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   return (
@@ -98,21 +131,21 @@ export function Signup() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormInput
                 label="First Name"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
+                id="first_name"
+                name="first_name"
+                value={formData.first_name}
                 placeholder="Enter your first name"
-                error={errors.firstName}
+                error={errors.first_name} /* FIXED: Matches name="first_name" */
                 onChange={handleChange}
               />
 
               <FormInput
                 label="Last Name"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
+                id="last_name"
+                name="last_name"
+                value={formData.last_name}
                 placeholder="Enter your last name"
-                error={errors.lastName}
+                error={errors.last_name} /* FIXED: Matches name="last_name" */
                 onChange={handleChange}
               />
             </div>
@@ -164,22 +197,23 @@ export function Signup() {
 
             <FormInput
               label="Shipping Address"
-              id="shippingAddress"
-              name="shippingAddress"
-              value={formData.shippingAddress}
+              id="address"
+              name="address"
+              value={formData.address}
               placeholder="123 Main Street, City, State, ZIP"
               rows={3}
-              error={errors.shippingAddress}
+              error={errors.address} /* FIXED: Matches name="address" */
               onChange={handleChange}
             />
 
-            <button
+            <CustomButton
               type="submit"
-              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              icon={UserPlus}
+              isLoading={isSubmitting}
+              disabled={isSubmitting} // Ensure button is disabled while loading
             >
-              <UserPlus className="h-5 w-5" />
-              Sign Up
-            </button>
+              Create Account
+            </CustomButton>
           </form>
 
           <p className="text-center mt-6 text-muted-foreground">

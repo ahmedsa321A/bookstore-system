@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { books as allBooks, publishers } from '../../data/book';
+import { books as allBooks, publishers } from '../../types/book';
 import { BookCard } from '../../components/BookCard';
-import type { Book } from '../../data/book';
+import type { Book } from '../../types/book';
 
 interface SearchBooksProps {
   onAddToCart: (book: Book) => void;

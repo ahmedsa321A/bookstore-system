@@ -8,7 +8,7 @@ import {
   Trash2,
   Package,
 } from 'lucide-react';
-import { books as initialBooks } from '../data/book';
+import { books as initialBooks } from '../types/book';
 
 type Tab = 'add' | 'update' | 'reports' | 'orders';
 

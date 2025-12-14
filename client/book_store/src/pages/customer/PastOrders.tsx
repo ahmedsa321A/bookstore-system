@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Package, ChevronDown, ChevronUp } from 'lucide-react';
-import { customerOrders } from '../../data/book';
+import { customerOrders } from '../../types/book';
 
 export function PastOrders() {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);

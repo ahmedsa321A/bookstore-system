@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, LogIn } from "lucide-react";
-import FormInput from "../components/Forminput";
+import FormInput from "../components/FormInput";
 import AlertCard from "../components/AlertCard";
+import { CustomButton } from "../components/CustomButton";
+import authService from "../api/authService";
 
 type LoginForm = {
   username: string;
@@ -24,7 +26,7 @@ export function Login() {
     title?: string;
     message: string;
   } | null>(null);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -32,9 +34,9 @@ export function Login() {
     setErrors((prev) => ({ ...prev, [e.target.name]: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setIsSubmitting(true);
     const newErrors: LoginErrors = {};
     if (!formData.username) newErrors.username = "Username is required";
     if (!formData.password) newErrors.password = "Password is required";
@@ -46,16 +48,39 @@ export function Login() {
         title: "Form Error",
         message: "Please fix the highlighted fields and try again.",
       });
+      setIsSubmitting(false);
       return;
     }
 
-    // Mock login - check username to determine role
-    if (formData.username === "admin" || formData.username === "admin@bookstore.com") {
-      setAlert({ variant: "success", message: "Logged in as admin" });
-      setTimeout(() => navigate("/admin"), 1000);
-    } else {
-      setAlert({ variant: "success", message: "Logged in as customer" });
-      setTimeout(() => navigate("/customer"), 1000);
+    try {
+      const user = await authService.login(formData);
+      setIsSubmitting(false);      
+      setAlert({
+        variant: "success",
+        title: "Login Successful",
+        message: `Welcome back, ${user.FirstName}!`,
+      });
+      if (user.Role === "admin") {
+        setTimeout(() => {
+          navigate("/admin/dashboard");
+
+        }, 1500);
+      }
+      else {
+        setTimeout(() => {
+          navigate("/customer");
+        }, 1500);
+      }
+    }
+    catch (error: any) {
+      setIsSubmitting(false);
+      console.error("Login error:", error);
+      setAlert({
+        variant: "error",
+        title: "Login Failed",
+        message: error.response?.data ||"An error occurred during login. Please try again.",
+      });
+      return;
     }
   };
 
@@ -109,13 +134,13 @@ export function Login() {
               onChange={handleChange}
             />
 
-            <button
+            <CustomButton
               type="submit"
-              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 cursor-pointer!"
+              icon={LogIn}
+              isLoading={isSubmitting}
             >
-              <LogIn className="h-5 w-5" />
               Login
-            </button>
+            </CustomButton>
           </form>
 
           <p className="text-center mt-6 text-muted-foreground">

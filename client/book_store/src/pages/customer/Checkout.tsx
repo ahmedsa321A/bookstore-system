@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, CheckCircle } from 'lucide-react';
-import type { Book } from '../../data/book';
+import type { Book } from '../../types/book';
 
 interface CartItem extends Book {
   quantity: number;

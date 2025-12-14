@@ -1,6 +1,6 @@
 import { BookOpen, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { books } from '../data/book';
+import { books } from '../types/book';
 
 const categories = [
   { name: 'Science', icon: '🔬', color: 'bg-blue-100' },

@@ -1,20 +1,20 @@
 export type SignupErrors = {
-    firstName?: string;
-    lastName?: string;
+    first_name?: string;
+    last_name?: string;
     username?: string;
     email?: string;
     password?: string;
     phone?: string;
-    shippingAddress?: string;
+    address?: string;
 };
 
 export type ValidateProps = {
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     username: string;
     email: string;
     password: string;
     phone: string;
-    shippingAddress: string;
+    address: string;
     errors: SignupErrors;
 };

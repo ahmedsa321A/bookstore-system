@@ -1,32 +1,32 @@
-import type { ValidateProps } from "../data/signup";
+import type { ValidateProps } from "../types/signup";
 
 
 export const validateSignup = ({
-    firstName,
-    lastName,
+    first_name,
+    last_name,
     username,
     email,
     password,
     phone,
-    shippingAddress,
+    address,
     errors,
 }: ValidateProps) => {
     // First Name Validation
-    if (!firstName.trim()) {
-        errors.firstName = "First name is required";
-    } else if (firstName.trim().length < 2) {
-        errors.firstName = "First name must be at least 2 characters";
-    } else if (!/^[a-zA-Z]+$/.test(firstName)) {
-        errors.firstName = "First name must contain only letters";
+    if (!first_name.trim()) {
+        errors.first_name = "First name is required";
+    } else if (first_name.trim().length < 2) {
+        errors.first_name = "First name must be at least 2 characters";
+    } else if (!/^[a-zA-Z]+$/.test(first_name)) {
+        errors.first_name = "First name must contain only letters";
     }
 
     // Last Name Validation
-    if (!lastName.trim()) {
-        errors.lastName = "Last name is required";
-    } else if (lastName.trim().length < 2) {
-        errors.lastName = "Last name must be at least 2 characters";
-    } else if (!/^[a-zA-Z]+$/.test(lastName)) {
-        errors.lastName = "Last name must contain only letters";
+    if (!last_name.trim()) {
+        errors.last_name = "Last name is required";
+    } else if (last_name.trim().length < 2) {
+        errors.last_name = "Last name must be at least 2 characters";
+    } else if (!/^[a-zA-Z]+$/.test(last_name)) {
+        errors.last_name = "Last name must contain only letters";
     }
 
     // Username Validation
@@ -74,9 +74,9 @@ export const validateSignup = ({
     }
 
     // Shipping Address Validation
-    if (!shippingAddress.trim()) {
-        errors.shippingAddress = "Shipping address is required";
-    } else if (shippingAddress.trim().length < 10) {
-        errors.shippingAddress = "Shipping address must be at least 10 characters";
+    if (!address.trim()) {
+        errors.address = "Shipping address is required";
+    } else if (address.trim().length < 10) {
+        errors.address = "Shipping address must be at least 10 characters";
     }
 };
