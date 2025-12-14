@@ -27,3 +27,34 @@ You MUST enable credentials: When you make requests (using Axios or Fetch), you 
 // If using Axios:
 axios.post(url, data, { withCredentials: true })
 ```
+update-2
+very request to the cart MUST include the withCredentials: true setting (just like you did for auth), or the server will reject it.
+
+Here are the Endpoints:
+
+1. Add to Cart
+
+URL: POST http://localhost:8800/api/cart/add
+
+Body: { "bookId": 50 }
+
+Note: It automatically checks the logged-in user's token.
+
+2. Get Cart Items
+
+URL: GET http://localhost:8800/api/cart
+
+Response: Returns an array of items.
+
+IMPORTANT: Each item has a CartID. You need to save this ID to use for the delete button.
+
+JSON
+```
+[ { "CartID": 14, "Title": "The Great Gatsby", ... } ]
+```
+3. Remove Item
+
+URL: DELETE http://localhost:8800/api/cart/:id
+
+Example: /api/cart/14 (Use the CartID, NOT the BookID!)
+
