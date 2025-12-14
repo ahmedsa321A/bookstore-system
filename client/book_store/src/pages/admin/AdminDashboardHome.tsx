@@ -1,5 +1,5 @@
 import { BookOpen, ShoppingBag, DollarSign, AlertTriangle, TrendingUp, Users } from 'lucide-react';
-import { books, customerOrders } from '../../data/books';
+import { books, customerOrders } from '../../data/book';
 
 export function AdminDashboardHome() {
   const totalBooks = books.length;

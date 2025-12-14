@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BookPlus, Plus, X } from 'lucide-react';
-import { publishers } from '../../data/books';
+import { publishers } from '../../data/book';
 
 export function AddBook() {
   const [authors, setAuthors] = useState(['']);

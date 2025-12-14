@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { books as allBooks } from '../data/books';
+import { books as allBooks } from '../data/book';
 import { BookCard } from '../components/BookCard';
-import type { Book } from '../data/books';
+import type { Book } from '../data/book';
 
 interface CustomerDashboardProps {
   onAddToCart: (book: Book) => void;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, Edit, Trash2, Save, X } from 'lucide-react';
-import { books as initialBooks } from '../../data/books';
+import { books as initialBooks } from '../../data/book';
 
 export function ModifyBooks() {
   const [books, setBooks] = useState(initialBooks);

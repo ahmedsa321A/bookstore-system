@@ -1,6 +1,6 @@
 import { Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { Book } from '../data/books';
+import type { Book } from '../data/book';
 
 interface CartItem extends Book {
   quantity: number;

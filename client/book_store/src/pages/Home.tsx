@@ -1,5 +1,5 @@
 import { BookCard } from '../components/BookCard';
-import { books } from '../data/books';
+import { books } from '../data/book';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

@@ -1,6 +1,6 @@
 import { BookOpen, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { books } from '../data/books';
+import { books } from '../data/book';
 
 const categories = [
   { name: 'Science', icon: '🔬', color: 'bg-blue-100' },
@@ -37,9 +37,9 @@ export function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary rounded-lg hover:bg-secondary transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary rounded-lg hover:bg-secondary transition-colors cursor-pointer"
               >
-                <LogIn className="h-5 w-5" />
+                <LogIn className="h-5 w-5 cursor-pointer" />
                 Login
               </Link>
               <Link
@@ -133,26 +133,6 @@ export function LandingPage() {
               <p className="text-white/80">
                 Your trusted partner for quality books and excellent service.
               </p>
-            </div>
-
-            {/* Contact Info */}
-            <div>
-              <h3 className="mb-4">Contact Us</h3>
-              <ul className="space-y-2 text-white/80">
-                <li>Email: contact@bookstore.com</li>
-                <li>Phone: +1 (555) 123-4567</li>
-                <li>Address: 123 Book Street, NY 10001</li>
-              </ul>
-            </div>
-
-            {/* Business Hours */}
-            <div>
-              <h3 className="mb-4">Business Hours</h3>
-              <ul className="space-y-2 text-white/80">
-                <li>Monday - Friday: 9:00 AM - 8:00 PM</li>
-                <li>Saturday: 10:00 AM - 6:00 PM</li>
-                <li>Sunday: 12:00 PM - 5:00 PM</li>
-              </ul>
             </div>
           </div>
 

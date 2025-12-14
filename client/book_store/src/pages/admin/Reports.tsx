@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FileText, DollarSign, Calendar, Users, TrendingUp, Search } from 'lucide-react';
-import { customerOrders } from '../../data/books';
+import { customerOrders } from '../../data/book';
 
 type ReportType = 'monthly' | 'daily' | 'customers' | 'books' | 'specific';
 
