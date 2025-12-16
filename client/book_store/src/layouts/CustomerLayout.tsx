@@ -11,6 +11,9 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { LogoutModal } from '../components/LogoutModal';
+import authService from '../api/authService';
+import { useAppDispatch } from '../store/hooks';
+import { logout } from '../store/slices/authSlice';
 
 interface CustomerLayoutProps {
   cartCount: number;
@@ -21,7 +24,7 @@ export function CustomerLayout({ cartCount }: CustomerLayoutProps) {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
+  const dispatch = useAppDispatch();
   const menuItems = [
     { path: '/customer/search', label: 'Search Books', icon: Search },
     { path: '/customer/cart', label: 'Shopping Cart', icon: ShoppingCart, badge: cartCount },
@@ -31,9 +34,11 @@ export function CustomerLayout({ cartCount }: CustomerLayoutProps) {
 
   const handleLogout = () => {
     setLogoutModalOpen(false);
+    authService.logout();
+    dispatch(logout());
     navigate('/');
   };
-
+  
   return (
     <div className="flex min-h-screen bg-secondary/30">
       {/* Sidebar */}

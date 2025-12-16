@@ -2,6 +2,21 @@ const db=require('../config/db');
 
 const bcrypt=require('bcryptjs');
 
+
+exports.getMe = (req, res) => {
+    const myId = req.user.id; 
+
+    const q = "SELECT UserID, Username, Email, Address, Phone, Role FROM Users WHERE UserID = ?";
+
+    db.query(q, [myId], (err, data) => {
+        if (err) return res.status(500).json(err);
+        if (data.length === 0) return res.status(404).json("User not found!");
+        
+        const { Password, ...info } = data[0]; 
+        return res.status(200).json(info);
+    });
+};
+
 exports.getUser=(req,res)=>{
     if (req.user.id != req.params.id) {
         return res.status(403).json("You can only view your own profile!");

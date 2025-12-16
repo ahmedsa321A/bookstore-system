@@ -1,48 +1,35 @@
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  shippingAddress: string;
-  role: 'admin' | 'customer';
-}
+import type { User } from "./auth";
 
 export const users: User[] = [
   {
-    id: 'ADMIN-001',
-    username: 'admin',
-    email: 'admin@bookstore.com',
-    password: 'admin123',
-    firstName: 'Admin',
-    lastName: 'User',
-    phone: '+1 (555) 100-0001',
-    shippingAddress: '100 Admin Lane, New York, NY 10001',
-    role: 'admin',
+    UserID: 1,
+    Username: 'admin',
+    Email: 'admin@bookstore.com',
+    FirstName: 'Admin',
+    LastName: 'User',
+    Phone: '+1 (555) 100-0001',
+    Address: '100 Admin Lane, New York, NY 10001',
+    Role: 'admin',
   },
   {
-    id: 'CUST-001',
-    username: 'john.smith',
-    email: 'john.smith@email.com',
-    password: 'customer123',
-    firstName: 'John',
-    lastName: 'Smith',
-    phone: '+1 (555) 123-4567',
-    shippingAddress: '123 Main St, New York, NY 10001',
-    role: 'customer',
+    UserID: 2,
+    Username: 'john.smith',
+    Email: 'john.smith@email.com',
+    FirstName: 'John',
+    LastName: 'Smith',
+    Phone: '+1 (555) 123-4567',
+    Address: '123 Main St, New York, NY 10001',
+    Role: 'customer',
   },
   {
-    id: 'CUST-002',
-    username: 'sarah.johnson',
-    email: 'sarah.j@email.com',
-    password: 'customer123',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    phone: '+1 (555) 234-5678',
-    shippingAddress: '456 Oak Ave, Boston, MA 02101',
-    role: 'customer',
+    UserID: 3,
+    Username: 'sarah.johnson',
+    Email: 'sarah.j@email.com',
+    FirstName: 'Sarah',
+    LastName: 'Johnson',
+    Phone: '+1 (555) 234-5678',
+    Address: '456 Oak Ave, Boston, MA 02101',
+    Role: 'customer',
   },
 ];
 

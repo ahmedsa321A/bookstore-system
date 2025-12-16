@@ -5,6 +5,9 @@ import FormInput from "../components/FormInput";
 import AlertCard from "../components/AlertCard";
 import { CustomButton } from "../components/CustomButton";
 import authService from "../api/authService";
+import type { User } from "../types/auth";
+import { setUser } from "../store/slices/authSlice";
+import { useAppDispatch } from "../store/hooks";
 
 type LoginForm = {
   username: string;
@@ -28,7 +31,8 @@ export function Login() {
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-
+  const dispatch = useAppDispatch();
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors((prev) => ({ ...prev, [e.target.name]: undefined }));
@@ -53,7 +57,8 @@ export function Login() {
     }
 
     try {
-      const user = await authService.login(formData);
+      const user : User = await authService.login(formData);
+      dispatch(setUser(user));
       setIsSubmitting(false);      
       setAlert({
         variant: "success",

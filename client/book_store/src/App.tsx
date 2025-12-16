@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
@@ -17,6 +17,12 @@ import { Checkout } from './pages/customer/Checkout';
 import { PastOrders } from './pages/customer/PastOrders';
 import { EditProfile } from './pages/customer/EditProfile';
 import type { Book } from './types/book';
+import ProtectedRoute from './components/ProtectedRoute';
+import { Unauthorized } from './pages/Unauthorized';
+import type { RootState } from './store/store';
+import { fetchCurrentUser } from './store/slices/authSlice';
+import Loading from './components/Loading';
+import { useAppSelector,useAppDispatch } from './store/hooks';
 
 interface CartItem extends Book {
   quantity: number;
@@ -24,7 +30,13 @@ interface CartItem extends Book {
 
 export default function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const dispatch = useAppDispatch();
+  const { loading } = useAppSelector((state:RootState) => state.auth);
 
+  useEffect(() => {
+    dispatch(fetchCurrentUser());
+  }, [dispatch]);
+  
   const handleAddToCart = (book: Book) => {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === book.id);
@@ -53,6 +65,10 @@ export default function App() {
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+  if (loading) {
+    return <Loading size="large" text="Loading..." color="#4A90E2" />;
+  }
+
   return (
     <Router>
       <Routes>
@@ -62,35 +78,39 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
 
         {/* Admin Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboardHome />} />
-          <Route path="add-book" element={<AddBook />} />
-          <Route path="modify-books" element={<ModifyBooks />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="reports" element={<Reports />} />
+        <Route element={<ProtectedRoute allowedRole={'Admin'} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboardHome />} />
+            <Route path="add-book" element={<AddBook />} />
+            <Route path="modify-books" element={<ModifyBooks />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="reports" element={<Reports />} />
+          </Route>
         </Route>
 
         {/* Customer Routes */}
-        <Route path="/customer" element={<CustomerLayout cartCount={cartCount} />}>
-          <Route index element={<Navigate to="/customer/search" replace />} />
-          <Route path="search" element={<SearchBooks onAddToCart={handleAddToCart} />} />
-          <Route
-            path="cart"
-            element={
-              <ShoppingCart
-                cartItems={cartItems}
-                onUpdateQuantity={handleUpdateQuantity}
-                onRemoveItem={handleRemoveItem}
-              />
-            }
-          />
-          <Route
-            path="checkout"
-            element={<Checkout cartItems={cartItems} onClearCart={handleClearCart} />}
-          />
-          <Route path="orders" element={<PastOrders />} />
-          <Route path="profile" element={<EditProfile />} />
+        <Route element={<ProtectedRoute allowedRole={'Customer'} />}>
+          <Route path="/customer" element={<CustomerLayout cartCount={cartCount} />}>
+            <Route index element={<Navigate to="/customer/search" replace />} />
+            <Route path="search" element={<SearchBooks onAddToCart={handleAddToCart} />} />
+            <Route
+              path="cart"
+              element={
+                <ShoppingCart
+                  cartItems={cartItems}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onRemoveItem={handleRemoveItem}
+                />
+              }
+            />
+            <Route
+              path="checkout"
+              element={<Checkout cartItems={cartItems} onClearCart={handleClearCart} />}
+            />
+            <Route path="orders" element={<PastOrders />} />
+            <Route path="profile" element={<EditProfile />} />
+          </Route>
         </Route>
 
         {/* Book Details - Outside layouts for flexibility */}
@@ -104,6 +124,8 @@ export default function App() {
             </div>
           }
         />
+
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
