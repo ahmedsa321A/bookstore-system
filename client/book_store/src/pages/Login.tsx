@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, LogIn } from "lucide-react";
 import FormInput from "../components/FormInput";
@@ -7,7 +7,7 @@ import { CustomButton } from "../components/CustomButton";
 import authService from "../api/authService";
 import type { User } from "../types/auth";
 import { setUser } from "../store/slices/authSlice";
-import { useAppDispatch } from "../store/hooks";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 type LoginForm = {
   username: string;
@@ -30,9 +30,21 @@ export function Login() {
     message: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAppSelector(state => state.auth);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   
+  useEffect(() => {
+    if (user) {
+      if (user.Role === "Admin") {
+        navigate("/admin");
+      } else {
+        navigate("/customer");
+      }
+    }
+  } , [user, navigate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors((prev) => ({ ...prev, [e.target.name]: undefined }));
@@ -91,6 +103,11 @@ export function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/30 py-12 px-4">
+      <div className="absolute top-4 left-4">
+        <Link to="/" className="text-primary hover:underline">
+          &larr; Back to Home
+        </Link> 
+      </div>
       <div className="max-w-md w-full">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header */}

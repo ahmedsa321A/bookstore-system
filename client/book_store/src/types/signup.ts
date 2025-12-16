@@ -8,6 +8,7 @@ export type SignupErrors = {
     address?: string;
 };
 
+
 export type ValidateProps = {
     first_name: string;
     last_name: string;
@@ -18,3 +19,4 @@ export type ValidateProps = {
     address: string;
     errors: SignupErrors;
 };
+

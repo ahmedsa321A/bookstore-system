@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, UserPlus } from "lucide-react";
 import type { SignupErrors } from "../types/signup";
@@ -8,6 +8,7 @@ import FormInput from "../components/FormInput";
 import type { SignupRequest } from "../types/auth";
 import { CustomButton } from "../components/CustomButton";
 import authService from "../api/authService";
+import { useAppSelector } from "../store/hooks";
 
 export function Signup() {
   const [formData, setFormData] = useState<SignupRequest>({
@@ -19,8 +20,18 @@ export function Signup() {
     phone: "",
     address: "",
   });
+  const { user } = useAppSelector(state => state.auth);
 
-  // Ensure your SignupErrors type allows string indexing for the clear logic to work
+  useEffect(() => {
+    if (user) {
+      if (user.Role === "Admin") {
+        navigate("/admin");
+      } else {
+        navigate("/customer");
+      }
+    }
+  } , [user]);
+
   const [errors, setErrors] = useState<SignupErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState<{
@@ -34,8 +45,8 @@ export function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAlert(null); // Clear previous alerts
-    setIsSubmitting(true); // START LOADING
+    setAlert(null); 
+    setIsSubmitting(true); 
 
     // 1. Validate
     const newErrors: SignupErrors = {};
@@ -48,7 +59,7 @@ export function Signup() {
         title: "Form Error",
         message: "Please fix the highlighted fields and try again.",
       });
-      setIsSubmitting(false); // STOP LOADING if validation fails
+      setIsSubmitting(false); 
       return;
     }
 
@@ -79,8 +90,7 @@ export function Signup() {
           "An error occurred during signup. Please try again.",
       });
     }
-    // Note: We do NOT put setIsSubmitting(false) in 'finally' 
-    // because we want the spinner to keep going if we are redirecting on success.
+
   };
 
   const handleChange = (
@@ -93,7 +103,6 @@ export function Signup() {
       [name]: value,
     }));
 
-    // FIXED: Clear the specific error for this field immediately
     if (errors[name as keyof SignupErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -101,6 +110,11 @@ export function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/30 py-12 px-4">
+            <div className="absolute top-4 left-4">
+        <Link to="/" className="text-primary hover:underline">
+          &larr; Back to Home
+        </Link> 
+      </div>
       <div className="max-w-2xl w-full">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
@@ -145,7 +159,7 @@ export function Signup() {
                 name="last_name"
                 value={formData.last_name}
                 placeholder="Enter your last name"
-                error={errors.last_name} /* FIXED: Matches name="last_name" */
+                error={errors.last_name}
                 onChange={handleChange}
               />
             </div>
@@ -202,7 +216,7 @@ export function Signup() {
               value={formData.address}
               placeholder="123 Main Street, City, State, ZIP"
               rows={3}
-              error={errors.address} /* FIXED: Matches name="address" */
+              error={errors.address} 
               onChange={handleChange}
             />
 
@@ -210,7 +224,7 @@ export function Signup() {
               type="submit"
               icon={UserPlus}
               isLoading={isSubmitting}
-              disabled={isSubmitting} // Ensure button is disabled while loading
+              disabled={isSubmitting} 
             >
               Create Account
             </CustomButton>

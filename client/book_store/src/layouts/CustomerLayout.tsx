@@ -36,7 +36,9 @@ export function CustomerLayout({ cartCount }: CustomerLayoutProps) {
     setLogoutModalOpen(false);
     authService.logout();
     dispatch(logout());
-    navigate('/');
+    setTimeout(() => {
+      navigate('/');
+    }, 1);
   };
   
   return (

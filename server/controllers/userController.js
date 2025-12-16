@@ -6,7 +6,7 @@ const bcrypt=require('bcryptjs');
 exports.getMe = (req, res) => {
     const myId = req.user.id; 
 
-    const q = "SELECT UserID, Username, Email, Address, Phone, Role FROM Users WHERE UserID = ?";
+    const q = "SELECT * FROM Users WHERE UserID = ?";
 
     db.query(q, [myId], (err, data) => {
         if (err) return res.status(500).json(err);

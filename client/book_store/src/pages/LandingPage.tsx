@@ -1,6 +1,8 @@
 import { BookOpen, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { books } from '../types/book';
+import { use, useEffect } from 'react';
+import { useAppSelector } from '../store/hooks';
 
 const categories = [
   { name: 'Science', icon: '🔬', color: 'bg-blue-100' },
@@ -12,6 +14,19 @@ const categories = [
 
 export function LandingPage() {
   const featuredBooks = books.filter((book) => book.featured).slice(0, 6);
+  const state = useAppSelector((state) => state.auth); 
+
+  useEffect(() => {
+    if (state.isAuthenticated) {
+      const role = state.user?.Role;
+      if (role === 'Admin') {
+        window.location.href = '/admin/dashboard';
+      } else if (role === 'Customer') {
+        window.location.href = '/customer/search';
+      }
+    }
+  }
+  , [state]);
 
   return (
     <div>
