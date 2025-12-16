@@ -90,5 +90,9 @@ Body: Send the fields you want to update.
   "password": "",  // LEAVE EMPTY to keep the old password
   "address": "New Address",
   "phone": "0123456789"
-}```
+}
+```
 
+
+getME
+URL: PUT http://localhost:8800/api/users/me
