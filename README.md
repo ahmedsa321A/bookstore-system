@@ -58,3 +58,37 @@ URL: DELETE http://localhost:8800/api/cart/:id
 
 Example: /api/cart/14 (Use the CartID, NOT the BookID!)
 
+# update-3
+
+1. Home Page (Public)
+
+URL: GET http://localhost:8800/books
+
+Use: Fetch this to display all available books on the landing page.
+
+2. Get User Details (For "Edit Profile" Form)
+
+URL: GET http://localhost:8800/api/users/:id
+
+Replace :id with the UserID you saved during login.
+
+Use: Pre-fill the form inputs (Name, Email, Address, etc.).
+
+Note: This does not return the password (for security).
+
+3. Update User Profile
+
+URL: PUT http://localhost:8800/api/users/:id
+
+Body: Send the fields you want to update.
+
+```JSON
+
+{
+  "username": "New Name",
+  "email": "new@email.com",
+  "password": "",  // LEAVE EMPTY to keep the old password
+  "address": "New Address",
+  "phone": "0123456789"
+}```
+
