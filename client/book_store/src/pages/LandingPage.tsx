@@ -1,7 +1,7 @@
 import { BookOpen, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { books } from '../types/book';
-import { use, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 
 const categories = [

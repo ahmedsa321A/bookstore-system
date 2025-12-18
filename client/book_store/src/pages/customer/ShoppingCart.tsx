@@ -1,18 +1,11 @@
 import { Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { Book } from '../../types/book';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { removeItem, updateQuantity } from '../../store/slices/cartSlice';
 
-interface CartItem extends Book {
-  quantity: number;
-}
-
-interface ShoppingCartProps {
-  cartItems: CartItem[];
-  onUpdateQuantity: (bookId: string, quantity: number) => void;
-  onRemoveItem: (bookId: string) => void;
-}
-
-export function ShoppingCart({ cartItems, onUpdateQuantity, onRemoveItem }: ShoppingCartProps) {
+export function ShoppingCart() {
+  const dispatch = useAppDispatch();
+  const cartItems = useAppSelector((state) => state.cart.items);
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal > 50 ? 0 : 5.99;
   const total = subtotal + shipping;
@@ -76,7 +69,7 @@ export function ShoppingCart({ cartItems, onUpdateQuantity, onRemoveItem }: Shop
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() =>
-                                onUpdateQuantity(item.id, Math.max(1, item.quantity - 1))
+                                dispatch(updateQuantity({ bookId: item.id, quantity: Math.max(1, item.quantity - 1) }))
                               }
                               className="w-8 h-8 flex items-center justify-center bg-secondary rounded hover:bg-secondary/80 transition-colors"
                             >
@@ -84,7 +77,8 @@ export function ShoppingCart({ cartItems, onUpdateQuantity, onRemoveItem }: Shop
                             </button>
                             <span className="w-8 text-center">{item.quantity}</span>
                             <button
-                              onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => dispatch(updateQuantity({ bookId: item.id, quantity: Math.max(1, item.quantity +1) }))
+                              }
                               className="w-8 h-8 flex items-center justify-center bg-secondary rounded hover:bg-secondary/80 transition-colors"
                             >
                               +
@@ -96,7 +90,7 @@ export function ShoppingCart({ cartItems, onUpdateQuantity, onRemoveItem }: Shop
                         </td>
                         <td className="px-6 py-4">
                           <button
-                            onClick={() => onRemoveItem(item.id)}
+                            onClick={() => dispatch(removeItem(item.id))}
                             className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -109,7 +103,6 @@ export function ShoppingCart({ cartItems, onUpdateQuantity, onRemoveItem }: Shop
               </div>
             </div>
           </div>
-
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">

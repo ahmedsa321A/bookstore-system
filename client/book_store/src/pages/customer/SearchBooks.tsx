@@ -2,18 +2,16 @@ import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { books as allBooks, publishers } from '../../types/book';
 import { BookCard } from '../../components/BookCard';
-import type { Book } from '../../types/book';
+import { useAppDispatch } from '../../store/hooks';
+import { addToCart } from '../../store/slices/cartSlice';
 
-interface SearchBooksProps {
-  onAddToCart: (book: Book) => void;
-}
 
-export function SearchBooks({ onAddToCart }: SearchBooksProps) {
+export function SearchBooks() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedPublisher, setSelectedPublisher] = useState<string>('All');
   const [selectedAuthor, setSelectedAuthor] = useState<string>('All');
-
+  const dispatch = useAppDispatch();
   const categories = ['All', 'Science', 'Art', 'Religion', 'History', 'Geography'];
   const authors = ['All', ...Array.from(new Set(allBooks.flatMap((b) => b.authors)))];
 
@@ -119,7 +117,7 @@ export function SearchBooks({ onAddToCart }: SearchBooksProps) {
       {filteredBooks.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredBooks.map((book) => (
-            <BookCard key={book.id} book={book} onAddToCart={onAddToCart} showDetails={true} />
+            <BookCard key={book.id} book={book} onAddToCart={() => dispatch(addToCart(book))} showDetails={true} />
           ))}
         </div>
       ) : (

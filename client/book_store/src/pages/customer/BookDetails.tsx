@@ -1,15 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import { books } from '../../types/book';
-import type { Book } from '../../types/book';
+import { useAppDispatch } from '../../store/hooks';
+import { addToCart } from '../../store/slices/cartSlice';
 
-interface BookDetailsProps {
-  onAddToCart: (book: Book) => void;
-}
 
-export function BookDetails({ onAddToCart }: BookDetailsProps) {
+export function BookDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const book = books.find((b) => b.id === id);
 
   if (!book) {
@@ -108,7 +107,7 @@ export function BookDetails({ onAddToCart }: BookDetailsProps) {
             {inStock && (
               <button
                 onClick={() => {
-                  onAddToCart(book);
+                  dispatch(addToCart(book));
                   alert('Book added to cart!');
                 }}
                 className="w-full py-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"

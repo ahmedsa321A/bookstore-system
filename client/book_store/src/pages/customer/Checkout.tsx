@@ -1,28 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, CheckCircle } from 'lucide-react';
-import type { Book } from '../../types/book';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { clearCart } from '../../store/slices/cartSlice';
 
-interface CartItem extends Book {
-  quantity: number;
-}
 
-interface CheckoutProps {
-  cartItems: CartItem[];
-  onClearCart: () => void;
-}
 
-export function Checkout({ cartItems, onClearCart }: CheckoutProps) {
+export function Checkout() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     cardNumber: '',
     expiryDate: '',
   });
-
+  const cartItems = useAppSelector((state) => state.cart.items);
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal > 50 ? 0 : 5.99;
   const total = subtotal + shipping;
-
+  const dispatch = useAppDispatch();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -33,7 +27,7 @@ export function Checkout({ cartItems, onClearCart }: CheckoutProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert('Payment successful! Order placed.');
-    onClearCart();
+    dispatch(clearCart());
     navigate('/customer/orders');
   };
 

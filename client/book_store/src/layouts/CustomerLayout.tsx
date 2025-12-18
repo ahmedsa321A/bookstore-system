@@ -12,19 +12,18 @@ import {
 } from 'lucide-react';
 import { LogoutModal } from '../components/LogoutModal';
 import authService from '../api/authService';
-import { useAppDispatch } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
+import { clearCart } from '../store/slices/cartSlice';
 
-interface CustomerLayoutProps {
-  cartCount: number;
-}
-
-export function CustomerLayout({ cartCount }: CustomerLayoutProps) {
+export function CustomerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const cartItems = useAppSelector((state) => state.cart.items);
+  const cartCount = cartItems.length;
   const menuItems = [
     { path: '/customer/search', label: 'Search Books', icon: Search },
     { path: '/customer/cart', label: 'Shopping Cart', icon: ShoppingCart, badge: cartCount },
@@ -36,6 +35,7 @@ export function CustomerLayout({ cartCount }: CustomerLayoutProps) {
     setLogoutModalOpen(false);
     authService.logout();
     dispatch(logout());
+    dispatch(clearCart());
     setTimeout(() => {
       navigate('/');
     }, 1);

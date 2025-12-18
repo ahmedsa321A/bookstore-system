@@ -1,5 +1,7 @@
 import type { ValidateEditProfileProps } from "../types/editprofile";
 import type { ValidateProps } from "../types/signup";
+import type { CartItem } from '../types/cart';
+const CART_KEY = 'cart';
 
 
 export const validateSignup = ({
@@ -98,7 +100,7 @@ export const validateEditProfile = ({
     // --- Personal Information (Always Required) ---
 
     // First Name
-     if ((first_name ?? "").trim().length < 2) {
+    if ((first_name ?? "").trim().length < 2) {
         errors.firstName = "First name must be at least 2 characters";
     } else if (!/^[a-zA-Z\s]+$/.test(first_name ?? "")) {
         errors.firstName = "First name must contain only letters";
@@ -153,9 +155,26 @@ export const validateEditProfile = ({
             errors.new_password = "Password must contain at least one number";
         }
 
-        // 3. Check Confirmation
         if (new_password !== confirm_password) {
             errors.confirm_password = "Passwords do not match";
         }
+    }
+};
+
+
+
+export const loadCart = (): CartItem[] => {
+    try {
+        const data = localStorage.getItem(CART_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch {
+        return [];
+    }
+};
+
+export const saveCart = (cart: CartItem[]) => {
+    try {
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch {
     }
 };
