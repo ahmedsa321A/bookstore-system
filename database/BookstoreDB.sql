@@ -273,8 +273,7 @@ CREATE TABLE `publisher_order_items` (
   `publisher_order_id` int NOT NULL,
   `isbn` varchar(13) NOT NULL,
   `quantity` int NOT NULL,
-  `Publisher_orders_order_id` int NOT NULL,
-  PRIMARY KEY (`publisher_order_id`,`isbn`,`Publisher_orders_order_id`),
+  PRIMARY KEY (`publisher_order_id`,`isbn`),
   KEY `isbn_idx` (`isbn`),
   CONSTRAINT `isbn_pub_fk` FOREIGN KEY (`isbn`) REFERENCES `books` (`isbn`),
   CONSTRAINT `order_id` FOREIGN KEY (`publisher_order_id`) REFERENCES `publisher_orders` (`publisher_order_id`)
@@ -378,3 +377,4 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-12-20 21:25:42
+
