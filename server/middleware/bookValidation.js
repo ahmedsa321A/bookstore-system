@@ -1,4 +1,4 @@
-const getValidationErrors = (data, isUpdate = false) => {
+const getValidationErrors = (data ={}, isUpdate = false) => {
     const { isbn, title, publication_year, price, stock, threshold, publisher_id, category } = data;
     const errors = [];
 

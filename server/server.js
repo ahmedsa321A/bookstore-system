@@ -30,7 +30,7 @@ app.use((req, res) => {
 // handle throw from the book controller
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ error: "An internal server error occurred" });
+    res.status(500).json({ error: err.message });
 });
 
 const PORT = process.env.PORT || 8800;
