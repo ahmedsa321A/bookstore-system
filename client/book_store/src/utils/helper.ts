@@ -1,6 +1,7 @@
 import type { ValidateEditProfileProps } from "../types/editprofile";
 import type { ValidateProps } from "../types/signup";
 import type { CartItem } from '../types/cart';
+import type { AddBookErrors, ModifyBookErrors } from "../types/book";
 const CART_KEY = 'cart';
 
 
@@ -160,6 +161,121 @@ export const validateEditProfile = ({
         }
     }
 };
+
+
+interface ValidateAddBookProps {
+    isbn: string;
+    title: string;
+    authors: string[],
+    publisher: string;
+    publicationYear: number;
+    price: string;
+    category: string;
+    stockQuantity: string;
+    thresholdQuantity: string;
+    errors: AddBookErrors;
+}
+
+export const validateAddBook = ({
+    isbn,
+    title,
+    authors,
+    publisher,
+    publicationYear,
+    price,
+    category,
+    stockQuantity,
+    thresholdQuantity,
+    errors,
+}: ValidateAddBookProps) => {
+    // ISBN
+    if (!isbn.trim()) {
+        errors.isbn = "ISBN is required";
+    } else if (!/^[0-9\-]{10,17}$/.test(isbn)) {
+        errors.isbn = "Invalid ISBN format";
+    }
+
+    // Title
+    if (!title.trim()) {
+        errors.title = "Book title is required";
+    } else if (title.trim().length < 3) {
+        errors.title = "Title must be at least 3 characters";
+    }
+
+    // Author
+    if (!authors || authors.length === 0 || authors.some((a: string) => !a.trim())) {
+        errors.author = "At least one author is required";
+    }
+
+    if (category === '') {
+        errors.category = "Category is required";
+    }
+    // Publisher
+    if (!publisher) {
+        errors.publisher = "Publisher is required";
+    }
+
+    // Publication Year
+    const currentYear = new Date().getFullYear();
+    if (!publicationYear) {
+        errors.publicationYear = "Publication year is required";
+    } else if (publicationYear < 1900 || publicationYear > currentYear + 1) {
+        errors.publicationYear = "Invalid publication year";
+    }
+
+    // Price
+    if (!price) {
+        errors.price = "Price is required";
+    } else if (Number(price) <= 0) {
+        errors.price = "Price must be greater than zero";
+    }
+
+    // Stock Quantity
+    if (stockQuantity === '') {
+        errors.stockQuantity = "Stock quantity is required";
+    } else if (Number(stockQuantity) < 0) {
+        errors.stockQuantity = "Stock cannot be negative";
+    }
+
+    // Threshold Quantity
+    if (thresholdQuantity === '') {
+        errors.thresholdQuantity = "Threshold quantity is required";
+    } else if (Number(thresholdQuantity) < 0) {
+        errors.thresholdQuantity = "Threshold cannot be negative";
+    } else if (Number(thresholdQuantity) > Number(stockQuantity)) {
+        errors.thresholdQuantity = "Threshold cannot exceed stock quantity";
+    }
+};
+
+export function validateModifyBook(data: any): ModifyBookErrors {
+    const errors: ModifyBookErrors = {};
+
+    if (!data.isbn.trim()) {
+        errors.isbn = "ISBN is required";
+    }
+
+    if (!data.title.trim()) {
+        errors.title = "Title is required";
+    }
+
+    if (!data.authors.trim()) {
+        errors.authors = "At least one author is required";
+    }
+
+    if (!data.category) {
+        errors.category = "Category is required";
+    }
+
+    if (data.stockQuantity < 0 || isNaN(data.stockQuantity)) {
+        errors.stockQuantity = "Stock must be 0 or more";
+    }
+
+    if (data.price <= 0 || isNaN(data.price)) {
+        errors.price = "Price must be greater than 0";
+    }
+
+    return errors;
+}
 
 
 

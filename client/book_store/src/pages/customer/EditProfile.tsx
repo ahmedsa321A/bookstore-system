@@ -4,8 +4,8 @@ import { useAppSelector } from '../../store/hooks';
 import FormInput from '../../components/FormInput';
 import AlertCard from '../../components/AlertCard';
 import { CustomButton } from '../../components/CustomButton';
-import { validateEditProfile } from '../../utils/helper'; // Import validation
-import type { EditProfileErrors } from '../../types/editprofile'; // Error Type
+import { validateEditProfile } from '../../utils/helper'; 
+import type { EditProfileErrors } from '../../types/editprofile'; 
 
 interface EditProfileFormState {
   first_name: string;
@@ -139,7 +139,6 @@ export function EditProfile() {
                 onChange={handleChange}
                 placeholder="Enter first name"
               />
-
               <FormInput
                 label="Last Name"
                 id="last_name"
@@ -179,8 +178,8 @@ export function EditProfile() {
               <div className="md:col-span-2">
                 <FormInput
                   label="Shipping Address"
-                  id="address" // Changed ID to match name/state
-                  name="address" // Changed name to match state
+                  id="address" 
+                  name="address" 
                   value={formData.address}
                   error={errors.address}
                   onChange={handleChange}

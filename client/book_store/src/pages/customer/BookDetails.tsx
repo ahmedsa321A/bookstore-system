@@ -6,10 +6,10 @@ import { addToCart } from '../../store/slices/cartSlice';
 
 
 export function BookDetails() {
-  const { id } = useParams();
+  const { isbn } = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const book = books.find((b) => b.id === id);
+  const book = books.find((b) => b.isbn === isbn);
 
   if (!book) {
     return (

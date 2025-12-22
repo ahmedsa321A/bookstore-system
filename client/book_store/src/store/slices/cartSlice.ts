@@ -18,7 +18,7 @@ const cartSlice = createSlice({
     reducers: {
         addToCart: (state, action: PayloadAction<Book>) => {
             const item = state.items.find(
-                (i) => i.id === action.payload.id
+                (i) => i.isbn === action.payload.isbn
             );
             if (item) {
                 item.quantity += 1;
@@ -30,10 +30,10 @@ const cartSlice = createSlice({
 
         updateQuantity: (
             state,
-            action: PayloadAction<{ bookId: string; quantity: number }>
+            action: PayloadAction<{ isbn: string; quantity: number }>
         ) => {
             const item = state.items.find(
-                (i) => i.id === action.payload.bookId
+                (i) => i.isbn=== action.payload.isbn
             );
 
             if (item) {
@@ -45,7 +45,7 @@ const cartSlice = createSlice({
 
         removeItem: (state, action: PayloadAction<string>) => {
             state.items = state.items.filter(
-                (i) => i.id !== action.payload
+                (i) => i.isbn !== action.payload
             );
 
             saveCart(state.items);

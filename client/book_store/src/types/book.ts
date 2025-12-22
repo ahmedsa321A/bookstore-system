@@ -1,5 +1,4 @@
 export interface Book {
-  id: string;
   isbn: string;
   title: string;
   authors: string[];
@@ -13,6 +12,27 @@ export interface Book {
   description: string;
   featured?: boolean;
 }
+export interface AddBookErrors {
+  isbn?: string;
+  title?: string;
+  author?: string;
+  publisher?: string;
+  publicationYear?: string;
+  price?: string;
+  category?: string;
+  stockQuantity?: string;
+  thresholdQuantity?: string;
+}
+
+export interface ModifyBookErrors {
+  isbn?: string;
+  title?: string;
+  authors?: string;
+  category?: string;
+  stockQuantity?: string;
+  price?: string;
+}
+
 
 export const publishers = [
   'Penguin Random House',
@@ -27,7 +47,6 @@ export const publishers = [
 
 export const books: Book[] = [
   {
-    id: '1',
     isbn: '978-0-123456-47-2',
     title: 'The Cosmos Explained',
     authors: ['Dr. Sarah Johnson'],
@@ -42,7 +61,6 @@ export const books: Book[] = [
     featured: true,
   },
   {
-    id: '2',
     isbn: '978-0-234567-89-1',
     title: 'Modern Art Movements',
     authors: ['Emily Carter'],
@@ -57,7 +75,6 @@ export const books: Book[] = [
     featured: true,
   },
   {
-    id: '3',
     isbn: '978-0-345678-90-1',
     title: 'World Religions',
     authors: ['Prof. Michael Chen'],
@@ -72,7 +89,6 @@ export const books: Book[] = [
     featured: true,
   },
   {
-    id: '4',
     isbn: '978-0-456789-01-2',
     title: 'Ancient Civilizations',
     authors: ['David Robertson'],
@@ -87,7 +103,6 @@ export const books: Book[] = [
     featured: true,
   },
   {
-    id: '5',
     isbn: '978-0-567890-12-3',
     title: 'Atlas of the World',
     authors: ['National Geographic Team'],
@@ -102,7 +117,6 @@ export const books: Book[] = [
     featured: true,
   },
   {
-    id: '6',
     isbn: '978-0-678901-23-4',
     title: 'Quantum Physics for Beginners',
     authors: ['Dr. Lisa Wang'],
@@ -117,7 +131,6 @@ export const books: Book[] = [
     featured: false,
   },
   {
-    id: '7',
     isbn: '978-0-789012-34-5',
     title: 'The Renaissance Masters',
     authors: ['Antonio Rossi', 'Maria Bianchi'],
@@ -132,7 +145,6 @@ export const books: Book[] = [
     featured: false,
   },
   {
-    id: '8',
     isbn: '978-0-890123-45-6',
     title: 'World War II Chronicles',
     authors: ['James Miller'],
@@ -161,7 +173,6 @@ export interface Order {
 }
 
 export interface OrderItem {
-  bookId: string;
   isbn: string;
   title: string;
   quantity: number;
@@ -175,14 +186,12 @@ export const customerOrders: Order[] = [
     customerName: 'John Smith',
     items: [
       {
-        bookId: '1',
         isbn: '978-0-123456-47-2',
         title: 'The Cosmos Explained',
         quantity: 2,
         price: 29.99,
       },
       {
-        bookId: '3',
         isbn: '978-0-345678-90-1',
         title: 'World Religions',
         quantity: 1,
@@ -201,14 +210,12 @@ export const customerOrders: Order[] = [
     customerName: 'Sarah Johnson',
     items: [
       {
-        bookId: '2',
         isbn: '978-0-234567-89-1',
         title: 'Modern Art Movements',
         quantity: 1,
         price: 34.99,
       },
       {
-        bookId: '4',
         isbn: '978-0-456789-01-2',
         title: 'Ancient Civilizations',
         quantity: 1,
@@ -227,7 +234,6 @@ export const customerOrders: Order[] = [
     customerName: 'Mike Davis',
     items: [
       {
-        bookId: '1',
         isbn: '978-0-123456-47-2',
         title: 'The Cosmos Explained',
         quantity: 1,
@@ -246,14 +252,12 @@ export const customerOrders: Order[] = [
     customerName: 'Emily Brown',
     items: [
       {
-        bookId: '5',
         isbn: '978-0-567890-12-3',
         title: 'Atlas of the World',
         quantity: 2,
         price: 39.99,
       },
       {
-        bookId: '6',
         isbn: '978-0-678901-23-4',
         title: 'Quantum Physics for Beginners',
         quantity: 1,
@@ -270,7 +274,6 @@ export const customerOrders: Order[] = [
 
 export interface PublisherOrder {
   id: string;
-  bookId: string;
   isbn: string;
   title: string;
   publisher: string;
@@ -284,7 +287,6 @@ export interface PublisherOrder {
 export const publisherOrders: PublisherOrder[] = [
   {
     id: 'PO-2001',
-    bookId: '4',
     isbn: '978-0-456789-01-2',
     title: 'Ancient Civilizations',
     publisher: 'Cambridge University Press',
@@ -296,7 +298,6 @@ export const publisherOrders: PublisherOrder[] = [
   },
   {
     id: 'PO-2002',
-    bookId: '7',
     isbn: '978-0-789012-34-5',
     title: 'The Renaissance Masters',
     publisher: 'Macmillan Publishers',

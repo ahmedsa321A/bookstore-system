@@ -39,7 +39,7 @@ export function BookCard({ book, onAddToCart, showDetails = true }: BookCardProp
           <div className="flex gap-2">
             {showDetails && (
               <Link
-                to={`/book/${book.id}`}
+                to={`/book/${book.isbn}`}
                 className="flex items-center gap-1 px-3 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors"
               >
                 <Eye className="h-4 w-4" />

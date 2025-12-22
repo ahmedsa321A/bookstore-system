@@ -2,13 +2,14 @@ import React from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 interface FormInputProps {
-    label: string;
+    label?: string;
     id: string;
     name: string;
     type?: string;
     value: string;
     placeholder?: string;
     required?: boolean;
+    compact?: boolean;
     rows?: number;
     error?: string;
     showPassword?: boolean;
@@ -26,6 +27,7 @@ const FormInput: React.FC<FormInputProps> = ({
     value,
     placeholder,
     rows,
+    compact,
     error,
     showPassword,
     onTogglePassword,
@@ -33,7 +35,8 @@ const FormInput: React.FC<FormInputProps> = ({
 }) => {
     const isPassword = type === "password";
 
-    const baseClasses =
+    const baseClasses = compact ?
+        "w-full px-2 py-1 text-sm bg-input-background rounded border focus:outline-none" :
         "w-full px-4 py-3 bg-input-background rounded-lg border focus:outline-none transition-colors";
 
     const borderClasses = error
@@ -42,10 +45,12 @@ const FormInput: React.FC<FormInputProps> = ({
 
     return (
         <div className="space-y-1">
-            <label htmlFor={id} className="block mb-2">
-                {label}
-            </label>
 
+            {label &&
+                <label htmlFor={id} className="block mb-2">
+                    {label}
+                </label>
+            }
             <div className="relative">
                 {rows ? (
                     <textarea

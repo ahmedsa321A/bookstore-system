@@ -33,7 +33,7 @@ export default function App() {
         ))}
 
         {/* Admin Routes */}
-        <Route element={<ProtectedRoute allowedRole="Admin" />}>
+        <Route element={<ProtectedRoute allowedRole="Customer" />}>
           <Route
             path={adminRoutes.path}
             element={adminRoutes.element}
@@ -58,7 +58,7 @@ export default function App() {
 
         {/* Book Details - Outside layouts for flexibility */}
         <Route element={<ProtectedRoute allowedRole="Customer" />}>
-          <Route path="/book/:id" element={<div className="min-h-screen bg-secondary/30">
+          <Route path="/book/:isbn" element={<div className="min-h-screen bg-secondary/30">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <BookDetails />
             </div>

@@ -97,7 +97,7 @@ export function Checkout() {
 
               <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex gap-3 pb-3 border-b border-border">
+                  <div className="flex gap-3 pb-3 border-b border-border">
                     <img
                       src={item.image}
                       alt={item.title}

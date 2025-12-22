@@ -49,7 +49,7 @@ export function ShoppingCart() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {cartItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-secondary/30">
+                      <tr key={item.isbn} className="hover:bg-secondary/30">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <img
@@ -69,7 +69,7 @@ export function ShoppingCart() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() =>
-                                dispatch(updateQuantity({ bookId: item.id, quantity: Math.max(1, item.quantity - 1) }))
+                                dispatch(updateQuantity({ isbn: item.isbn, quantity: Math.max(1, item.quantity - 1) }))
                               }
                               className="w-8 h-8 flex items-center justify-center bg-secondary rounded hover:bg-secondary/80 transition-colors"
                             >
@@ -77,7 +77,7 @@ export function ShoppingCart() {
                             </button>
                             <span className="w-8 text-center">{item.quantity}</span>
                             <button
-                              onClick={() => dispatch(updateQuantity({ bookId: item.id, quantity: Math.max(1, item.quantity +1) }))
+                              onClick={() => dispatch(updateQuantity({ isbn: item.isbn, quantity: Math.max(1, item.quantity +1) }))
                               }
                               className="w-8 h-8 flex items-center justify-center bg-secondary rounded hover:bg-secondary/80 transition-colors"
                             >
@@ -90,7 +90,7 @@ export function ShoppingCart() {
                         </td>
                         <td className="px-6 py-4">
                           <button
-                            onClick={() => dispatch(removeItem(item.id))}
+                            onClick={() => dispatch(removeItem(item.isbn))}
                             className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors"
                           >
                             <Trash2 className="h-4 w-4" />

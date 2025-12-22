@@ -1,12 +1,25 @@
 import { useState } from 'react';
 import { Search, Edit, Trash2, Save, X } from 'lucide-react';
-import { books as initialBooks } from '../../types/book';
+import { books as initialBooks, type Book } from '../../types/book';
+import { validateModifyBook } from "../../utils/helper";
+import { ConfirmModal } from "../../components/ConfirmModal";
+import AlertCard from '../../components/AlertCard';
+import FormInput from '../../components/FormInput';
+import FormSelect from '../../components/FormSelect';
+
 
 export function ModifyBooks() {
   const [books, setBooks] = useState(initialBooks);
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingIsbn, setEditingIsbn] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>(null);
+  const [errors, setErrors] = useState<any>({});
+  const [alert, setAlert] = useState<{
+    variant: 'success' | 'error';
+    title?: string;
+    message: string;
+  } | null>(null);
+  const [deleteIsbn, setDeleteIsbn] = useState<string | null>(null);
 
   const filteredBooks = books.filter(
     (book) =>
@@ -15,35 +28,64 @@ export function ModifyBooks() {
       book.authors.some((author) => author.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleEdit = (book: any) => {
-    setEditingId(book.id);
+  const handleEdit = (book: Book) => {
+    setEditingIsbn(book.isbn);
     setEditData({ ...book, authors: book.authors.join(', ') });
   };
 
   const handleSave = () => {
+    const validationErrors = validateModifyBook(editData);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setAlert({
+        variant: "error",
+        title: "Validation Error",
+        message: "Please fix the highlighted fields before saving.",
+      });
+      return;
+    }
+
     setBooks(
       books.map((book) =>
-        book.id === editingId
-          ? { ...editData, authors: editData.authors.split(',').map((a: string) => a.trim()) }
+        book.isbn === editingIsbn
+          ? {
+            ...editData,
+            authors: editData.authors
+              .split(",")
+              .map((a: string) => a.trim()),
+          }
           : book
       )
     );
-    setEditingId(null);
+
+    setEditingIsbn(null);
     setEditData(null);
-    alert('Book updated successfully!');
+    setErrors({});
+
+    setAlert({
+      variant: "success",
+      title: "Updated",
+      message: "Book updated successfully.",
+    });
   };
+
 
   const handleCancel = () => {
-    setEditingId(null);
+    setEditingIsbn(null);
     setEditData(null);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this book?')) {
-      setBooks(books.filter((book) => book.id !== id));
-      alert('Book deleted successfully!');
-    }
+  const confirmDelete = () => {
+    setBooks(books.filter((book) => book.isbn !== deleteIsbn));
+    setDeleteIsbn(null);
+    setAlert({
+      variant: "success",
+      title: "Updated",
+      message: "Book deleted successfully.",
+    });
   };
+
 
   return (
     <div>
@@ -65,7 +107,15 @@ export function ModifyBooks() {
           />
         </div>
       </div>
-
+      {alert && (
+        <AlertCard
+          variant={alert.variant}
+          title={alert.title}
+          message={alert.message}
+          duration={3000}
+          onClose={() => setAlert(null)}
+        />
+      )}
       {/* Books Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
@@ -83,68 +133,98 @@ export function ModifyBooks() {
             </thead>
             <tbody className="divide-y divide-border">
               {filteredBooks.map((book) => (
-                <tr key={book.id} className="hover:bg-secondary/30">
-                  {editingId === book.id ? (
+                <tr key={book.isbn} className="hover:bg-secondary/30">
+                  {editingIsbn === book.isbn ? (
                     <>
                       <td className="px-6 py-4">
-                        <input
-                          type="text"
+                        <FormInput
+                          id="isbn"
+                          name="isbn"
                           value={editData.isbn}
-                          onChange={(e) => setEditData({ ...editData, isbn: e.target.value })}
-                          className="w-full px-2 py-1 bg-input-background rounded border border-border"
+                          error={errors.isbn}
+                          compact
+                          onChange={(e) =>
+                            setEditData({ ...editData, isbn: e.target.value })
+                          }
                         />
                       </td>
                       <td className="px-6 py-4">
-                        <input
-                          type="text"
+                        <FormInput
+                          id="title"
+                          name="title"
                           value={editData.title}
-                          onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                          className="w-full px-2 py-1 bg-input-background rounded border border-border"
+                          error={errors.title}
+                          compact
+                          onChange={(e) =>
+                            setEditData({ ...editData, title: e.target.value })
+                          }
                         />
                       </td>
                       <td className="px-6 py-4">
-                        <input
-                          type="text"
+                        <FormInput
+                          id="authors"
+                          name="authors"
                           value={editData.authors}
-                          onChange={(e) => setEditData({ ...editData, authors: e.target.value })}
-                          className="w-full px-2 py-1 bg-input-background rounded border border-border"
+                          error={errors.authors}
+                          compact
                           placeholder="Author 1, Author 2"
+                          onChange={(e) =>
+                            setEditData({ ...editData, authors: e.target.value })
+                          }
                         />
                       </td>
                       <td className="px-6 py-4">
-                        <select
+                        <FormSelect
+                          label=""
+                          id="category"
+                          name="category"
                           value={editData.category}
-                          onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-                          className="w-full px-2 py-1 bg-input-background rounded border border-border"
-                        >
-                          <option value="Science">Science</option>
-                          <option value="Art">Art</option>
-                          <option value="Religion">Religion</option>
-                          <option value="History">History</option>
-                          <option value="Geography">Geography</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4">
-                        <input
-                          type="number"
-                          min="0"
-                          value={editData.stockQuantity}
+                          error={errors.category}
+                          compact
                           onChange={(e) =>
-                            setEditData({ ...editData, stockQuantity: parseInt(e.target.value) })
+                            setEditData({ ...editData, category: e.target.value })
                           }
-                          className="w-24 px-2 py-1 bg-input-background rounded border border-border"
+                          options={[
+                            { label: "Science", value: "Science" },
+                            { label: "Art", value: "Art" },
+                            { label: "Religion", value: "Religion" },
+                            { label: "History", value: "History" },
+                            { label: "Geography", value: "Geography" },
+                          ]}
                         />
                       </td>
                       <td className="px-6 py-4">
-                        <input
+                        <FormInput
+                          label=""
+                          id="stockQuantity"
+                          name="stockQuantity"
                           type="number"
-                          step="0.01"
-                          min="0"
-                          value={editData.price}
+                          value={editData.stockQuantity.toString()}
+                          error={errors.stockQuantity}
+                          compact
                           onChange={(e) =>
-                            setEditData({ ...editData, price: parseFloat(e.target.value) })
+                            setEditData({
+                              ...editData,
+                              stockQuantity: Number(e.target.value),
+                            })
                           }
-                          className="w-24 px-2 py-1 bg-input-background rounded border border-border"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <FormInput
+                          label=""
+                          id="price"
+                          name="price"
+                          type="number"
+                          value={editData.price.toString()}
+                          error={errors.price}
+                          compact
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              price: Number(e.target.value),
+                            })
+                          }
                         />
                       </td>
                       <td className="px-6 py-4">
@@ -195,11 +275,12 @@ export function ModifyBooks() {
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(book.id)}
-                            className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors"
+                            onClick={() => setDeleteIsbn(book.isbn)}
+                            className="p-2 text-destructive hover:bg-destructive/10 rounded"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
+
                         </div>
                       </td>
                     </>
@@ -210,6 +291,14 @@ export function ModifyBooks() {
           </table>
         </div>
       </div>
+      {deleteIsbn && (
+        <ConfirmModal
+          title="Delete Book"
+          description="Are you sure you want to delete this book? This action cannot be undone."
+          onCancel={() => setDeleteIsbn(null)}
+          onConfirm={confirmDelete}
+        />
+      )}
 
       {filteredBooks.length === 0 && (
         <div className="text-center py-12">
