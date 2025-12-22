@@ -62,7 +62,7 @@ export function ModifyBooks() {
     setEditingIsbn(null);
     setEditData(null);
     setErrors({});
-
+    console.log("Book after edit:", editData);
     setAlert({
       variant: "success",
       title: "Updated",
@@ -78,6 +78,7 @@ export function ModifyBooks() {
 
   const confirmDelete = () => {
     setBooks(books.filter((book) => book.isbn !== deleteIsbn));
+    console.log("Deleted book with ISBN:", deleteIsbn);
     setDeleteIsbn(null);
     setAlert({
       variant: "success",

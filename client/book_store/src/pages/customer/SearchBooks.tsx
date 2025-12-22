@@ -52,9 +52,9 @@ export function SearchBooks() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4">
+    <div className="mx-auto">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-2">
         <h1 className="mb-1">Search Books</h1>
         <p className="text-muted-foreground">
           Browse and search our extensive book collection

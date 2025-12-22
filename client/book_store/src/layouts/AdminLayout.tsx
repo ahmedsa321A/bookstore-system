@@ -20,7 +20,6 @@ export function AdminLayout() {
   const navigate = useNavigate();
 
   const menuItems = [
-    { path: '/admin/dashboard', label: 'Dashboard Home', icon: LayoutDashboard },
     { path: '/admin/add-book', label: 'Add New Book', icon: BookPlus },
     { path: '/admin/modify-books', label: 'Modify Books', icon: Edit },
     { path: '/admin/orders', label: 'Orders', icon: ShoppingBag },
