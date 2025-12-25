@@ -7,8 +7,7 @@ export function ShoppingCart() {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 50 ? 0 : 5.99;
-  const total = subtotal + shipping;
+  const total = subtotal ;
 
   return (
     <div>
@@ -113,13 +112,7 @@ export function ShoppingCart() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Shipping</span>
-                  <span>{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span>
-                </div>
-                {shipping === 0 && (
-                  <p className="text-sm text-green-600">🎉 Free shipping on orders over $50!</p>
-                )}
+              
                 <div className="border-t border-border pt-3 flex justify-between">
                   <span>Total</span>
                   <span className="text-primary">${total.toFixed(2)}</span>
