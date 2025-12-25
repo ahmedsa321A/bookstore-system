@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { CreditCard, CheckCircle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { clearCart } from '../../store/slices/cartSlice';
-import FormInput from '../../components/FormInput';
-import AlertCard from '../../components/AlertCard';
+
+
 
 export function Checkout() {
   const navigate = useNavigate();
@@ -12,65 +12,23 @@ export function Checkout() {
     cardNumber: '',
     expiryDate: '',
   });
-  const [errors, setErrors] = useState<{ cardNumber?: string; expiryDate?: string }>({});
-  const [alert, setAlert] = useState<{
-    variant: "success" | "error";
-    title?: string;
-    message: string;
-  } | null>(null);
-
   const cartItems = useAppSelector((state) => state.cart.items);
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const total = subtotal;
+  const shipping = subtotal > 50 ? 0 : 5.99;
+  const total = subtotal + shipping;
   const dispatch = useAppDispatch();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Clear error when user types
-    if (errors[e.target.name as keyof typeof errors]) {
-      setErrors({ ...errors, [e.target.name]: undefined });
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: { cardNumber?: string} = {};
-    let isValid = true;
-
-    if (!formData.cardNumber) {
-      newErrors.cardNumber = 'Credit Card Number is required';
-      isValid = false;
-    } else if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ''))) {
-      newErrors.cardNumber = 'Credit Card Number must be 16 digits';
-      isValid = false;
-    }
-
-
-    setErrors(newErrors);
-    return isValid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setAlert(null);
-
-    if (!validateForm()) {
-      setAlert({
-        variant: "error",
-        title: "Validation Error",
-        message: "Please check your payment details.",
-      });
-      return;
-    }
-    console.log('Processing payment with data:', formData);
-    setAlert({
-      variant: "success",
-      title: "Payment Successful",
-      message: "Your payment has been processed successfully!",
-    });
-    // dispatch(clearCart());
+    alert('Payment successful! Order placed.');
+    dispatch(clearCart());
+    navigate('/customer/orders');
   };
 
   if (cartItems.length === 0) {
@@ -85,17 +43,6 @@ export function Checkout() {
         <p className="text-muted-foreground">Complete your purchase</p>
       </div>
 
-      {alert && (
-        <div className="mb-6">
-          <AlertCard
-            variant={alert.variant}
-            title={alert.title}
-            message={alert.message}
-            onClose={() => setAlert(null)}
-          />
-        </div>
-      )}
-
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Payment Information */}
@@ -106,17 +53,39 @@ export function Checkout() {
                 <h2>Payment Information</h2>
               </div>
               <div className="space-y-4">
-                <FormInput
-                  label="Credit Card Number"
-                  id="cardNumber"
-                  name="cardNumber"
-                  type="text"
-                  value={formData.cardNumber}
-                  error={errors.cardNumber}
-                  onChange={handleChange}
-                  placeholder="1234 5678 9012 3456"
-                />
+                <div>
+                  <label htmlFor="cardNumber" className="block mb-2">
+                    Credit Card Number
+                  </label>
+                  <input
+                    id="cardNumber"
+                    name="cardNumber"
+                    type="text"
+                    value={formData.cardNumber}
+                    onChange={handleChange}
+                    required
+                    placeholder="1234 5678 9012 3456"
+                    className="w-full px-4 py-3 bg-input-background rounded-lg border border-transparent focus:border-primary focus:outline-none transition-colors"
+                  />
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="expiryDate" className="block mb-2">
+                      Expiry Date
+                    </label>
+                    <input
+                      id="expiryDate"
+                      name="expiryDate"
+                      type="text"
+                      value={formData.expiryDate}
+                      onChange={handleChange}
+                      required
+                      placeholder="MM/YY"
+                      className="w-full px-4 py-3 bg-input-background rounded-lg border border-transparent focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -128,7 +97,7 @@ export function Checkout() {
 
               <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
                 {cartItems.map((item) => (
-                  <div key={item.isbn} className="flex gap-3 pb-3 border-b border-border">
+                  <div className="flex gap-3 pb-3 border-b border-border">
                     <img
                       src={item.image}
                       alt={item.title}
@@ -149,6 +118,10 @@ export function Checkout() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Shipping</span>
+                  <span>{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span>
                 </div>
                 <div className="border-t border-border pt-3 flex justify-between">
                   <span>Total</span>

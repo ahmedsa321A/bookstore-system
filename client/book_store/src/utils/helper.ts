@@ -137,19 +137,8 @@ export const validateEditProfile = ({
         errors.address = "Address must be at least 10 characters";
     }
 
-    // --- Password Change (Optional) ---
-    if(current_password && current_password.trim() !== "") {
-        // If Current Password is provided, New Password must be provided
-        if (!new_password || new_password.trim() === "") {
-            errors.new_password = "New password is required";
-        }
-        if(confirm_password === undefined || confirm_password.trim() === "") {
-            errors.confirm_password = "Please confirm your new password";
-        }
-        if(new_password === current_password) {
-            errors.new_password = "New password must be different from current password";
-        }
-    }
+    // --- Password Change (Optional - Only validates if newPassword is entered) ---
+
     if (new_password && new_password.trim() !== "") {
         // 1. Check if Current Password is provided
         if (!current_password) {

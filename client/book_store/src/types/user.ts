@@ -42,19 +42,3 @@ export interface CustomerProfile {
   currentPassword?: string;
   newPassword?: string;
 }
-
-export interface EditProfileFormState {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  address: string;
-  current_password?: string;
-  new_password?: string;
-  confirm_password?: string;
-}
-
-export interface updatedUserResponse {
-  message: string;
-  user: User;
-}

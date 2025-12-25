@@ -21,7 +21,7 @@ export default function App() {
   }, [dispatch]);
 
   if (loading) {
-    return <Loading size="large"  color="#4A90E2" />;
+    return <Loading size="large" text="Loading..." color="#4A90E2" />;
   }
 
   return (
