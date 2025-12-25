@@ -4,6 +4,7 @@ import { books as allBooks, publishers } from '../../types/book';
 import { BookCard } from '../../components/BookCard';
 import { useAppDispatch } from '../../store/hooks';
 import { addToCart } from '../../store/slices/cartSlice';
+import FormSelect from '../../components/FormSelect';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -77,37 +78,46 @@ export function SearchBooks() {
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 bg-white rounded-lg border border-border"
-        >
-          {categories.map((cat) => (
-            <option key={cat}>{cat}</option>
-          ))}
-        </select>
+  <FormSelect
+    label="Category"
+    id="category"
+    name="category"
+    value={selectedCategory}
+    options={categories.map((cat) => ({
+      label: cat,
+      value: cat,
+    }))}
+    onChange={(e) => setSelectedCategory(e.target.value)}
+  />
 
-        <select
-          value={selectedAuthor}
-          onChange={(e) => setSelectedAuthor(e.target.value)}
-          className="px-4 py-2 bg-white rounded-lg border border-border"
-        >
-          {authors.map((author) => (
-            <option key={author}>{author}</option>
-          ))}
-        </select>
+  <FormSelect
+    label="Author"
+    id="author"
+    name="author"
+    value={selectedAuthor}
+    options={authors.map((author) => ({
+      label: author,
+      value: author,
+    }))}
+    onChange={(e) => setSelectedAuthor(e.target.value)}
+  />
 
-        <select
-          value={selectedPublisher}
-          onChange={(e) => setSelectedPublisher(e.target.value)}
-          className="px-4 py-2 bg-white rounded-lg border border-border"
-        >
-          <option value="All">All Publishers</option>
-          {publishers.map((pub) => (
-            <option key={pub}>{pub}</option>
-          ))}
-        </select>
-      </div>
+  <FormSelect
+    label="Publisher"
+    id="publisher"
+    name="publisher"
+    value={selectedPublisher}
+    options={[
+      { label: "All Publishers", value: "All" },
+      ...publishers.map((pub) => ({
+        label: pub,
+        value: pub,
+      })),
+    ]}
+    onChange={(e) => setSelectedPublisher(e.target.value)}
+  />
+</div>
+
 
       {/* Results Count */}
       <p className="mb-4 text-muted-foreground">

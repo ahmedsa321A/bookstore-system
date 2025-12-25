@@ -22,15 +22,19 @@ interface AuthState {
 const initialState: AuthState = {
     user: null,
     isAuthenticated: false,
-    loading: true, 
+    loading: true,
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
-        setUser(state, action: PayloadAction<User>) {
-            state.user = action.payload;
+        setUser(state, action: PayloadAction<Partial<User>>) {
+            if (state.user) {
+                state.user = { ...state.user, ...action.payload } as User;
+            } else {
+                state.user = action.payload as User;
+            }
             state.isAuthenticated = true;
             state.loading = false;
         },
@@ -45,8 +49,11 @@ const authSlice = createSlice({
             .addCase(fetchCurrentUser.pending, state => {
                 state.loading = true;
             })
-            .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<User>) => {
-                state.user = action.payload;
+            .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<Partial<User>>) => {
+                state.user = {
+                    ...state.user,
+                    ...action.payload,
+                } as User;
                 state.isAuthenticated = true;
                 state.loading = false;
             })

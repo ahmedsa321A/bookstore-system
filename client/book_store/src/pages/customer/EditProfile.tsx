@@ -1,36 +1,30 @@
 import { useState } from 'react';
-import { User, Save } from 'lucide-react';
-import { useAppSelector } from '../../store/hooks';
+import { Save, User as IconUser } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import FormInput from '../../components/FormInput';
 import AlertCard from '../../components/AlertCard';
 import { CustomButton } from '../../components/CustomButton';
-import { validateEditProfile } from '../../utils/helper'; 
-import type { EditProfileErrors } from '../../types/editprofile'; 
+import { validateEditProfile } from '../../utils/helper';
+import type { EditProfileErrors } from '../../types/editprofile';
+import type { EditProfileFormState } from '../../types/user';
+import userService from '../../api/userService';
+import { setUser } from '../../store/slices/authSlice';
 
-interface EditProfileFormState {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  address: string;
-  current_password?: string;
-  new_password?: string;
-  confirm_password?: string;
-}
+
 
 export function EditProfile() {
   const user = useAppSelector((state) => state.auth.user);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [formData, setFormData] = useState<EditProfileFormState>({
-    first_name: user?.FirstName || '', 
+    first_name: user?.FirstName || '',
     last_name: user?.LastName || '',
     email: user?.Email || '',
     phone: user?.Phone || '',
     address: user?.Address || '',
     current_password: '',
     new_password: '',
-    confirm_password: '', 
+    confirm_password: '',
   });
   const [errors, setErrors] = useState<EditProfileErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,13 +33,14 @@ export function EditProfile() {
     title?: string;
     message: string;
   } | null>(null);
+  const dispatch = useAppDispatch();
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
+
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     if (errors[name as keyof EditProfileErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -70,34 +65,57 @@ export function EditProfile() {
       return;
     }
     setIsSubmitting(false);
-    console.log("Submitting profile update:", formData);
-    // try {
-     
+    try {
+      const userId = user?.UserID;
+      if (!userId) {
+        setAlert({
+          variant: "error",
+          title: "Update Failed",
+          message: "User ID is missing. Please try again.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      const res = await userService.update(userId, formData);
+      dispatch(setUser({
+        FirstName: formData.first_name,
+        LastName: formData.last_name,
+        Email: formData.email,
+        Phone: formData.phone,
+        Address: formData.address,
+      }));
+      setAlert({
+        variant: "success",
+        title: "Success",
+        message: res.message,
+      });
 
-    //   setAlert({
-    //     variant: "success",
-    //     title: "Success",
-    //     message: "Profile updated successfully!",
-    //   });
+      // Clear password fields on success
+      setFormData(prev => ({
+        ...prev,
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      }));
 
-    //   // Clear password fields on success
-    //   setFormData(prev => ({
-    //     ...prev,
-    //     current_password: '',
-    //     new_password: '',
-    //     confirm_password: ''
-    //   }));
+    } catch (error: any) {
+      let errorMessage = "Failed to update profile.";
+      if (typeof error.response?.data === 'string') {
+        errorMessage = error.response.data;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
 
-    // } catch (error: any) {
-    //   console.error("Update error:", error);
-    //   setAlert({
-    //     variant: "error",
-    //     title: "Update Failed",
-    //     message: error.response?.data?.message || "Failed to update profile.",
-    //   });
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
+      setAlert({
+        variant: "error",
+        title: "Update Failed",
+        message: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -105,7 +123,7 @@ export function EditProfile() {
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <User className="h-6 w-6 text-primary" />
+          <IconUser className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-gray-900">Edit Profile</h1>
         </div>
         <p className="text-muted-foreground">Update your personal information and password</p>
@@ -125,7 +143,7 @@ export function EditProfile() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          
+
           {/* Section: Personal Information */}
           <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
             <h2 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-2">Personal Information</h2>
@@ -178,8 +196,8 @@ export function EditProfile() {
               <div className="md:col-span-2">
                 <FormInput
                   label="Shipping Address"
-                  id="address" 
-                  name="address" 
+                  id="address"
+                  name="address"
                   value={formData.address}
                   error={errors.address}
                   onChange={handleChange}
@@ -194,7 +212,7 @@ export function EditProfile() {
           <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
             <h2 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-2">Change Password</h2>
             <p className="text-sm text-gray-500 mb-4">Leave these fields blank if you do not want to change your password.</p>
-            
+
             <div className="space-y-4">
               <FormInput
                 label="Current Password"
