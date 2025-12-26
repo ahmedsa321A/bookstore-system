@@ -22,18 +22,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/books', bookRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/cart', cartRoutes);
 app.use('/api/books', bookRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 
-//handle undefined routes
 app.use((req, res) => {
     res.status(404).json({ message: "Route not found" });
 });
 
-// handle throw from try catch blocks
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ error: err.message });

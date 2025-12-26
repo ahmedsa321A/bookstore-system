@@ -1,163 +1,135 @@
-# update-1 
-1. Base URL: http://localhost:8800/api/auth
 
-2. Endpoints:
+# Bookstore System API Documentation
 
-Signup: POST /signup
+**Base URL**: `http://localhost:8800`
 
-Body: { username, email, password, first_name, last_name, phone, address }
+## Important Notes for Frontend
+1.  **Credentials**: All requests requiring authentication MUST include `{ withCredentials: true }` (axios) or `credentials: 'include'` (fetch) to send the HTTP-Only cookie.
+2.  **Tokens**: The JWT is stored in an HTTP-Only cookie named `access_token`. You cannot access it via JavaScript.
 
-Login: POST /login
+---
 
-Body: { username, password }
+## 1. Authentication (`/api/auth`)
 
-Response: Returns user info (id, name, role) but NO token string.
+### Signup
+*   **URL**: `POST /api/auth/signup`
+*   **Body**:
+    ```json
+    {
+      "username": "john_doe",
+      "email": "john@example.com",
+      "password": "password123",
+      "first_name": "John",
+      "last_name": "Doe",
+      "phone": "1234567890",
+      "address": "123 Main St"
+    }
+    ```
+*   **Response**: `200 OK` - "User registered successfully!"
 
-Logout: POST /logout
+### Login
+*   **URL**: `POST /api/auth/login`
+*   **Body**:
+    ```json
+    {
+      "username": "john_doe",
+      "password": "password123"
+    }
+    ```
+*   **Response**: `200 OK` - Returns user profile object (excluding password). Sets `access_token` cookie.
 
-Body: Empty {}
+### Logout
+*   **URL**: `POST /api/auth/logout`
+*   **Body**: `{}`
+*   **Response**: `200 OK` - Clears cookie.
 
-CRITICAL FOR REACT (The Cookie Part): I am storing the JWT token in an HTTP-Only Cookie for security (not LocalStorage).
+---
 
-You cannot read the token in your JavaScript code. It's hidden from the browser.
+## 2. Users (`/api/users`)
 
-You MUST enable credentials: When you make requests (using Axios or Fetch), you must add this setting, otherwise the browser will ignore the cookie:
+### Get Current User
+*   **URL**: `GET /api/users/me`
+*   **Auth**: User Token
+*   **Response**: `200 OK` - User profile object.
 
-```JavaScript
-// If using Axios:
-axios.post(url, data, { withCredentials: true })
-```
-update-2
-very request to the cart MUST include the withCredentials: true setting (just like you did for auth), or the server will reject it.
+### Get User Profile
+*   **URL**: `GET /api/users/:id`
+*   **Auth**: User Token (Own profile only)
+*   **Response**: `200 OK` - User profile object.
 
-Here are the Endpoints:
+### Update User Profile
+*   **URL**: `PUT /api/users/:id`
+*   **Auth**: User Token (Own profile only)
+*   **Body** (Send only fields to update):
+    ```json
+    {
+      "username": "new_name",
+      "email": "new@email.com",
+      "password": "newpassword"
+    }
+    ```
+*   **Response**: `200 OK` - "Profile updated successfully!"
 
-1. Add to Cart
+---
 
-URL: POST http://localhost:8800/api/cart/add
+## 3. Books (`/api/books`)
 
-Body: { "bookId": 50 }
+### Search / List Books (Public)
+*   **URL**: `GET /api/books` or `GET /api/books/search`
+*   **Query Params** (Optional): `?isbn=...&title=...&category=...&author=...&publisher=...`
+*   **Response**: `200 OK` - Array of book objects.
 
-Note: It automatically checks the logged-in user's token.
+### Add Book (Admin Only)
+*   **URL**: `POST /api/books/add`
+*   **Auth**: Admin Token
+*   **Body**:
+    ```json
+    {
+      "isbn": "9781234567897",
+      "title": "New Book",
+      "publication_year": 2024,
+      "price": 29.99,
+      "stock": 100,
+      "threshold": 10,
+      "publisher_id": 1,
+      "category": "Science"
+    }
+    ```
+*   **Response**: `201 Created` - "Book added successfully!"
 
-2. Get Cart Items
+### Update Book (Admin Only)
+*   **URL**: `PUT /api/books/update/:isbn`
+*   **Auth**: Admin Token
+*   **Body**:
+    ```json
+    {
+      "price": 35.50,
+      "stock": 50
+    }
+    ```
+*   **Response**: `200 OK` - "Book modified successfully!"
 
-URL: GET http://localhost:8800/api/cart
+### Delete Book (Admin Only)
+*   **URL**: `DELETE /api/books/delete/:isbn`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - "Book deleted successfully!"
 
-Response: Returns an array of items.
+---
 
-IMPORTANT: Each item has a CartID. You need to save this ID to use for the delete button.
+## 4. Orders (`/api/orders`)
 
-JSON
-```
-[ { "CartID": 14, "Title": "The Great Gatsby", ... } ]
-```
-3. Remove Item
+### Checkout
+*   **URL**: `POST /api/orders/checkout`
+*   **Auth**: User Token
+*   **Body**:
+    ```json
+    {
+      "cardNumber": "1234567812345678",
+      "cartItems": [
+        { "isbn": "9781234567897", "quantity": 1 },
+        { "isbn": "9780000000001", "quantity": 2 }
+      ]
+    }
+    ```
+*   **Response**: `200 OK` - "Order placed successfully! Transaction Complete."
 
-URL: DELETE http://localhost:8800/api/cart/:id
-
-Example: /api/cart/14 (Use the CartID, NOT the BookID!)
-
-# update-3
-
-1. Home Page (Public)
-
-URL: GET http://localhost:8800/books
-
-Use: Fetch this to display all available books on the landing page.
-
-2. Get User Details (For "Edit Profile" Form)
-
-URL: GET http://localhost:8800/api/users/:id
-
-Replace :id with the UserID you saved during login.
-
-Use: Pre-fill the form inputs (Name, Email, Address, etc.).
-
-Note: This does not return the password (for security).
-
-3. Update User Profile
-
-URL: PUT http://localhost:8800/api/users/:id
-
-Body: Send the fields you want to update.
-
-```JSON
-
-{
-  "username": "New Name",
-  "email": "new@email.com",
-  "password": "",  // LEAVE EMPTY to keep the old password
-  "address": "New Address",
-  "phone": "0123456789"
-}
-```
-
-
-getME
-URL: PUT http://localhost:8800/api/users/me
-
-# update-4
-
-Endpoint Details
-
-```
-Method: POST
-
-Route: /checkout
-``` 
-
-Auth: Requires User Token (Bearer Token)
-
-Content-Type: application/json
-
-Request Body (What you send me):
-```
-JSON
-
-{
-  "cardNumber": "1234567812345678"
-}
-```
-(Note: I validate that it must be exactly 16 digits)
-
-Responses (What I send back):
- 1. Success (200 OK)
-
-Meaning: Order created, stock updated, cart cleared.
-
-Response:
-```
-JSON
-
-"Order placed successfully! Transaction Complete."
-```
-2. User Error (400 Bad Request)
-
-Meaning: Something is wrong with the input or the cart.
-
-Response (Invalid Card):
-```
-JSON
-
-"Invalid Credit Card Number! Must be 16 digits."
-```
-Response (Cart Empty):
-```
-JSON
-
-"Cart is empty!"
-```
-Response (Out of Stock):
-
-Important: Display this string directly to the user so they know which book to remove.
-```
-JSON
-
-"Not enough stock for book ISBN: 978-3-16-148410-0"
-```
-3. Server Error (500 Internal Server Error)
-
-Meaning: Database crash or connection issue.
-
-Response: (Standard Error Object)
