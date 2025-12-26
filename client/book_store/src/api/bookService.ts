@@ -24,7 +24,6 @@ const transformBook = (data: any): Book => {
         stockQuantity: data.stock,
         thresholdQuantity: data.threshold,
         image: data.image || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=1080&auto=format&fit=crop',
-        description: data.description || 'No description available.',
         featured: false, // Default
     };
 };
@@ -52,7 +51,6 @@ const bookService = {
         try {
             const response = await api.get<{ books: any[]; total: number; page: number; limit: number; totalPages: number }>(`/books/search?${params.toString()}`);
 
-            // Handle new backend response format including metadata
             if (response.data && Array.isArray(response.data.books)) {
                 return {
                     books: response.data.books.map(transformBook),
@@ -63,7 +61,6 @@ const bookService = {
                 };
             }
 
-            // Fallback for legacy response (if any)
             if (Array.isArray(response.data)) {
                 return {
                     books: (response.data as any[]).map(transformBook),
@@ -115,6 +112,11 @@ const bookService = {
         return response.data as { publisher_id: number, name: string }[];
     },
 
+    // GET /api/books/authors
+    getAuthors: async (): Promise<{ author_id: number, name: string }[]> => {
+        const response = await api.get('/books/authors');
+        return response.data as { author_id: number, name: string }[];
+    },
 
 };
 

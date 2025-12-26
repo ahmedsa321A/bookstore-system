@@ -9,7 +9,6 @@ export interface Book {
   stockQuantity: number;
   thresholdQuantity: number;
   image: string;
-  description: string;
   featured?: boolean;
   publisher_name?: string;
   publisher_id?: number;

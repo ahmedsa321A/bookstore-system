@@ -32,7 +32,6 @@ export const validateEditProfile = ({
     confirm_password,
     errors,
 }: ValidateEditProfileProps) => {
-    // --- Personal Information (Always Required) ---
 
     // First Name
     if (!first_name?.trim()) {
@@ -43,7 +42,6 @@ export const validateEditProfile = ({
         errors.firstName = "First name must contain only letters";
     }
 
-    // Last Name (Fixed: was using 'lastName' variable which didn't exist)
     if (!last_name?.trim()) {
         errors.lastName = "Last name is required";
     } else if (last_name.trim().length < 2) {
@@ -52,7 +50,6 @@ export const validateEditProfile = ({
         errors.lastName = "Last name must contain only letters";
     }
 
-    // Email
     if (!email?.trim()) {
         errors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -66,23 +63,18 @@ export const validateEditProfile = ({
         errors.phone = "Invalid phone number";
     }
 
-    // Address (Fixed: Changed error key from 'shippingAddress' to 'address' to match Type)
     if (!address?.trim()) {
         errors.address = "Shipping address is required";
     } else if (address.trim().length < 10) {
         errors.address = "Address must be at least 10 characters";
     }
 
-    // --- Password Change (Optional - Only validates if new_password is entered) ---
-
     if (new_password && new_password.trim() !== "") {
-        // 1. Check if Current Password is provided
         if (!current_password) {
             errors.current_password = "Current password is required to set a new one";
         }
 
         // 2. Validate New Password Complexity
-        // (Using errors.new_password instead of errors.password to be specific)
         if (new_password.length < 8) {
             errors.new_password = "Password must be at least 8 characters";
         } else if (!/[A-Z]/.test(new_password)) {

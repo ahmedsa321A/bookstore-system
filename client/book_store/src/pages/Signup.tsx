@@ -24,7 +24,7 @@ export function Signup() {
 
   useEffect(() => {
     if (user) {
-      if (user.Role === "Admin") {
+      if (user.role === "Admin") {
         navigate("/admin");
       } else {
         navigate("/customer");
