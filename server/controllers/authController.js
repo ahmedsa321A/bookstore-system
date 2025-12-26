@@ -20,7 +20,7 @@ exports.signup = (req, res) => {
         const hash = bcrypt.hashSync(password, salt);
 
         const insertUserQuery = "INSERT INTO users (username, password, role) VALUES (?, ?, 'CUSTOMER')";
-        
+
         db.query(insertUserQuery, [username, hash], (err, userResult) => {
             if (err) return res.status(500).json({ error: err.message });
 
@@ -74,10 +74,7 @@ exports.logout = (req, res) => {
         secure: true
     });
 
-    if (req.user && req.user.id) {
-         const clearCartQ = "DELETE FROM cart WHERE user_id = ?";
-         db.query(clearCartQ, [req.user.id]); 
-    }
+
 
     return res.status(200).json("User has been logged out.");
 };

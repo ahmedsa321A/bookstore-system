@@ -4,7 +4,6 @@ const cookieParser = require('cookie-parser'); // Import here
 const path = require('path');
 
 const authRoutes = require('./routes/authRoutes');
-const cartRoutes = require('./routes/cartRoutes');
 const bookRoutes = require('./routes/bookRoutes');
 const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
@@ -22,7 +21,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/cart', cartRoutes);
 app.use('/books', bookRoutes);
 app.use('/api/orders', orderRoutes);
 
