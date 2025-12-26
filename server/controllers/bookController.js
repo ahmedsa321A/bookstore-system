@@ -55,6 +55,7 @@ exports.searchBooks = async (req, res) => {
 
     queryStr += " GROUP BY Books.ISBN";
     queryStr += " LIMIT ? OFFSET ? ";
+    values.push(limit, offset);
 
     const result = await query(queryStr, values);
 
