@@ -13,7 +13,7 @@ exports.searchBooks = async (req, res) => {
     let values = [];
 
     if (author) {
-      joins.push("JOIN BookAuthors ON Books.BookID = BookAuthors.BookID");
+      joins.push("JOIN BookAuthors ON Books.ISBN = BookAuthors.ISBN");
       joins.push("JOIN Authors ON BookAuthors.AuthorID = Authors.AuthorID");
       conditions.push("Authors.Name = ?");
       values.push(author);

@@ -1,9 +1,9 @@
 const getValidationErrors = (data = {}, isUpdate = false) => {
-    const { isbn, title, publication_year, price, stock, threshold, publisher_id, category } = data;
+    const { isbn, title, publication_year, price, stock, threshold, publisher_id, category, author } = data;
     const errors = [];
 
     if (!isUpdate) {
-        if (!isbn || !title || !publication_year || price === undefined || stock === undefined || threshold === undefined || !publisher_id || !category) {
+        if (!isbn || !title || !publication_year || price === undefined || stock === undefined || threshold === undefined || !publisher_id || !category || !author) {
             return ["All fields are required."];
         }
     }

@@ -92,8 +92,10 @@
       "stock": 100,
       "threshold": 10,
       "publisher_id": 1,
+      "threshold": 10,
       "publisher_id": 1,
       "category": "Science",
+      "author": "Author Name",
       "image": "https://example.com/image.jpg"
     }
     ```

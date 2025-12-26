@@ -16,6 +16,7 @@ exports.addBook = async (req, res) => {
             publisher_id,
             category,
             image,
+            author, // Author name
         } = req.body;
 
         const existingBooks = await query("SELECT * FROM Books WHERE ISBN = ?", [
@@ -24,6 +25,18 @@ exports.addBook = async (req, res) => {
         if (existingBooks.length > 0)
             return res.status(409).json("Book with this ISBN already exists!");
 
+        // 1. Handle Author
+        let authorId;
+        const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [author]);
+
+        if (existingAuthor.length > 0) {
+            authorId = existingAuthor[0].author_id;
+        } else {
+            const result = await query("INSERT INTO authors (name) VALUES (?)", [author]);
+            authorId = result.insertId;
+        }
+
+        // 2. Insert Book
         const insertQuery =
             "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category, Image) VALUES (?)";
         const values = [
@@ -39,6 +52,10 @@ exports.addBook = async (req, res) => {
         ];
 
         await query(insertQuery, [values]);
+
+        // 3. Link Book and Author
+        await query("INSERT INTO bookauthors (isbn, author_id) VALUES (?, ?)", [isbn, authorId]);
+
         return res.status(201).json("Book added successfully!");
     } catch (err) {
         return res.status(500).json({ error: err.message });
@@ -46,7 +63,6 @@ exports.addBook = async (req, res) => {
 };
 
 exports.modifyBook = async (req, res) => {
-    // TODO: Add check to ensure modifications are valid regarding sold copies
     try {
         const targetISBN = req.params.isbn;
 
