@@ -6,7 +6,7 @@ const bcrypt=require('bcryptjs');
 exports.getMe = (req, res) => {
     const myId = req.user.id; 
 
-    const q = "SELECT * FROM Users WHERE UserID = ?";
+    const q = "SELECT * FROM Users WHERE User_id = ?";
 
     db.query(q, [myId], (err, data) => {
         if (err) return res.status(500).json(err);
@@ -22,7 +22,7 @@ exports.getUser=(req,res)=>{
         return res.status(403).json("You can only view your own profile!");
     }
 
-    const q = "SELECT UserID, Username, Email, Address, Phone FROM Users WHERE UserID = ?";
+    const q = "SELECT User_id, Username, Email, Address, Phone FROM Users WHERE User_id = ?";
     
     db.query(q, [req.user.id], (err, data) => {
         if (err) return res.status(500).json(err);

@@ -1,5 +1,5 @@
 import { BookOpen, ArrowRight, LogIn, UserPlus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { books } from '../types/book';
 import { useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
@@ -15,14 +15,15 @@ const categories = [
 export function LandingPage() {
   const featuredBooks = books.filter((book) => book.featured).slice(0, 6);
   const state = useAppSelector((state) => state.auth); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (state.isAuthenticated) {
       const role = state.user?.Role;
-      if (role === 'Admin') {
-        window.location.href = '/admin/dashboard';
-      } else if (role === 'Customer') {
-        window.location.href = '/customer/search';
+      if (role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else if (role === 'CUSTOMER') {
+        navigate('/customer/search');
       }
     }
   }
@@ -102,7 +103,7 @@ export function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
             {featuredBooks.map((book) => (
               <div
-                key={book.id}
+                key={book.isbn}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <div className="aspect-3/4 overflow-hidden bg-secondary/20">

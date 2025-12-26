@@ -5,7 +5,7 @@ import type { RootState } from '../store/store';
 import Loading from './Loading';
 
 interface ProtectedRouteProps {
-  allowedRole: 'Admin' | 'Customer';
+  allowedRole: 'ADMIN' | 'CUSTOMER';
   redirectTo?: string;
 }
 
