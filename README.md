@@ -95,7 +95,7 @@
       "threshold": 10,
       "publisher_id": 1,
       "category": "Science",
-      "author": "Author Name",
+      "author": ["Author One", "Author Two"],
       "image": "https://example.com/image.jpg"
     }
     ```

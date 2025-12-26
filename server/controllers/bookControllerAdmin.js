@@ -25,15 +25,19 @@ exports.addBook = async (req, res) => {
         if (existingBooks.length > 0)
             return res.status(409).json("Book with this ISBN already exists!");
 
-        // 1. Handle Author
-        let authorId;
-        const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [author]);
+        // 1. Handle Authors
+        const authorNames = Array.isArray(author) ? author : [author];
+        const authorIds = [];
 
-        if (existingAuthor.length > 0) {
-            authorId = existingAuthor[0].author_id;
-        } else {
-            const result = await query("INSERT INTO authors (name) VALUES (?)", [author]);
-            authorId = result.insertId;
+        for (const authorName of authorNames) {
+            const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [authorName]);
+
+            if (existingAuthor.length > 0) {
+                authorIds.push(existingAuthor[0].author_id);
+            } else {
+                const result = await query("INSERT INTO authors (name) VALUES (?)", [authorName]);
+                authorIds.push(result.insertId);
+            }
         }
 
         // 2. Insert Book
@@ -53,8 +57,10 @@ exports.addBook = async (req, res) => {
 
         await query(insertQuery, [values]);
 
-        // 3. Link Book and Author
-        await query("INSERT INTO bookauthors (isbn, author_id) VALUES (?, ?)", [isbn, authorId]);
+        // 3. Link Book and Authors
+        for (const authId of authorIds) {
+            await query("INSERT INTO bookauthors (isbn, author_id) VALUES (?, ?)", [isbn, authId]);
+        }
 
         return res.status(201).json("Book added successfully!");
     } catch (err) {

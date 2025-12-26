@@ -3,8 +3,11 @@ const getValidationErrors = (data = {}, isUpdate = false) => {
     const errors = [];
 
     if (!isUpdate) {
-        if (!isbn || !title || !publication_year || price === undefined || stock === undefined || threshold === undefined || !publisher_id || !category || !author) {
+        if (!isbn || !title || !publication_year || price === undefined || stock === undefined || threshold === undefined || !publisher_id || !category) {
             return ["All fields are required."];
+        }
+        if (!author || (Array.isArray(author) && author.length === 0)) {
+            return ["At least one author is required."];
         }
     }
 
