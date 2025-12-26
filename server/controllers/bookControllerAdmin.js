@@ -13,10 +13,10 @@ exports.addBook = async (req, res) => {
             price,
             stock,
             threshold,
-            publisher, // Now accepting name
+            publisher_id,
             category,
             image,
-            author, // Author name array
+            author, // Author name
         } = req.body;
 
         const existingBooks = await query("SELECT * FROM Books WHERE ISBN = ?", [
@@ -31,11 +31,13 @@ exports.addBook = async (req, res) => {
         const authorNames = Array.isArray(author) ? author : [author];
         const authorIds = [];
 
+
         try {
             for (const authorName of authorNames) {
                 if (!authorName) continue;
                 // Check author existence (lowercase keys based on schema check)
                 const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [authorName]);
+
 
                 if (existingAuthor.length > 0) {
                     authorIds.push(existingAuthor[0].author_id);
@@ -90,6 +92,7 @@ exports.addBook = async (req, res) => {
             await query("ROLLBACK");
             throw innerErr;
         }
+
 
     } catch (err) {
         return res.status(500).json({ error: err.message });
@@ -197,5 +200,16 @@ exports.addPublisher = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
+
+};
+exports.getAllPublishers = async (req, res) => {
+    try {
+        const publishers = await query("SELECT * FROM Publishers");
+        return res.status(200).json(publishers);
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+
+
 
 };

@@ -167,3 +167,27 @@
 *   **Auth**: User Token
 *   **Response**: `200 OK` - Array of past orders with details.
 
+---
+
+## 5. Publisher Management (Admin Only)
+
+### Get All Publishers
+*   **URL**: `GET /api/books/publishers`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - JSON array of all publishers.
+
+### Get Publisher Orders
+*   **URL**: `GET /api/books/publisher/orders`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - JSON array of all publisher orders with items.
+
+### Confirm Publisher Order
+*   **URL**: `PUT /api/books/publisher/order/confirm/:orderId`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - "Order confirmed and stock updated."
+
+### Cancel Publisher Order
+*   **URL**: `PUT /api/books/publisher/order/cancel/:orderId`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - "Order cancelled successfully."
+
