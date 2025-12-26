@@ -92,7 +92,11 @@
       "stock": 100,
       "threshold": 10,
       "publisher_id": 1,
-      "category": "Science"
+      "threshold": 10,
+      "publisher_id": 1,
+      "category": "Science",
+      "author": ["Author One", "Author Two"],
+      "image": "https://example.com/image.jpg"
     }
     ```
 *   **Response**: `201 Created` - "Book added successfully!"
@@ -104,7 +108,9 @@
     ```json
     {
       "price": 35.50,
-      "stock": 50
+      "price": 35.50,
+      "stock": 50,
+      "image": "https://example.com/new-image.jpg"
     }
     ```
 *   **Response**: `200 OK` - "Book modified successfully!"
@@ -113,6 +119,30 @@
 *   **URL**: `DELETE /api/books/delete/:isbn`
 *   **Auth**: Admin Token
 *   **Response**: `200 OK` - "Book deleted successfully!"
+
+### Add Author (Admin Only)
+*   **URL**: `POST /api/books/addAuthor`
+*   **Auth**: Admin Token
+*   **Body**:
+    ```json
+    {
+      "name": "J.K. Rowling"
+    }
+    ```
+*   **Response**: `201 Created` - "Author added successfully!"
+
+### Add Publisher (Admin Only)
+*   **URL**: `POST /api/books/addPublisher`
+*   **Auth**: Admin Token
+*   **Body**:
+    ```json
+    {
+      "name": "Penguin Random House",
+      "address": "123 Publisher Lane",
+      "phone": "555-0199"
+    }
+    ```
+*   **Response**: `201 Created` - "Publisher added successfully!"
 
 ---
 

@@ -15,6 +15,8 @@ exports.addBook = async (req, res) => {
             threshold,
             publisher_id,
             category,
+            image,
+            author, // Author name
         } = req.body;
 
         const existingBooks = await query("SELECT * FROM Books WHERE ISBN = ?", [
@@ -23,8 +25,24 @@ exports.addBook = async (req, res) => {
         if (existingBooks.length > 0)
             return res.status(409).json("Book with this ISBN already exists!");
 
+        // 1. Handle Authors
+        const authorNames = Array.isArray(author) ? author : [author];
+        const authorIds = [];
+
+        for (const authorName of authorNames) {
+            const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [authorName]);
+
+            if (existingAuthor.length > 0) {
+                authorIds.push(existingAuthor[0].author_id);
+            } else {
+                const result = await query("INSERT INTO authors (name) VALUES (?)", [authorName]);
+                authorIds.push(result.insertId);
+            }
+        }
+
+        // 2. Insert Book
         const insertQuery =
-            "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category) VALUES (?)";
+            "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category, Image) VALUES (?)";
         const values = [
             isbn,
             title,
@@ -34,9 +52,16 @@ exports.addBook = async (req, res) => {
             threshold,
             publisher_id,
             category,
+            image,
         ];
 
         await query(insertQuery, [values]);
+
+        // 3. Link Book and Authors
+        for (const authId of authorIds) {
+            await query("INSERT INTO bookauthors (isbn, author_id) VALUES (?, ?)", [isbn, authId]);
+        }
+
         return res.status(201).json("Book added successfully!");
     } catch (err) {
         return res.status(500).json({ error: err.message });
@@ -44,7 +69,6 @@ exports.addBook = async (req, res) => {
 };
 
 exports.modifyBook = async (req, res) => {
-    // TODO: Add check to ensure modifications are valid regarding sold copies
     try {
         const targetISBN = req.params.isbn;
 
@@ -64,6 +88,7 @@ exports.modifyBook = async (req, res) => {
             currentBook.Threshold = updates.threshold;
         if (updates.publisher_id) currentBook.publisher_id = updates.publisher_id;
         if (updates.category) currentBook.Category = updates.category;
+        if (updates.image) currentBook.Image = updates.image;
 
         if (updates.stock !== undefined) {
             if (updates.stock < 0) {
@@ -78,7 +103,7 @@ exports.modifyBook = async (req, res) => {
 
         const updateQuery = `
       UPDATE Books 
-      SET Title = ?, publication_year = ?, Price = ?, Stock = ?, Threshold = ?, publisher_id = ?, Category = ? 
+      SET Title = ?, publication_year = ?, Price = ?, Stock = ?, Threshold = ?, publisher_id = ?, Category = ?, Image = ? 
       WHERE ISBN = ?`;
 
         const values = [
@@ -89,6 +114,7 @@ exports.modifyBook = async (req, res) => {
             currentBook.Threshold,
             currentBook.publisher_id,
             currentBook.Category,
+            currentBook.Image,
             targetISBN,
         ];
 
@@ -110,4 +136,44 @@ exports.deleteBook = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
+
+};
+exports.addAuthor = async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name) return res.status(400).json("Author name is required.");
+
+        // Check if author already exists
+        const existing = await query("SELECT * FROM Authors WHERE Name = ?", [name]);
+        if (existing.length > 0) {
+            return res.status(409).json("Author already exists.");
+        }
+
+        await query("INSERT INTO Authors (Name) VALUES (?)", [name]);
+        return res.status(201).json("Author added successfully!");
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+exports.addPublisher = async (req, res) => {
+    try {
+        const { name, address, phone } = req.body;
+        if (!name) return res.status(400).json("Publisher name is required.");
+
+        // Check if publisher already exists
+        const existing = await query("SELECT * FROM Publishers WHERE Name = ?", [name]);
+        if (existing.length > 0) {
+            return res.status(409).json("Publisher already exists.");
+        }
+
+        const insertQuery = "INSERT INTO Publishers (Name, Address, Phone) VALUES (?)";
+        const values = [name, address, phone];
+
+        await query(insertQuery, [values]);
+        return res.status(201).json("Publisher added successfully!");
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+
 };

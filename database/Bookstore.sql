@@ -80,6 +80,7 @@ CREATE TABLE `books` (
   `threshold` int NOT NULL,
   `publisher_id` int NOT NULL,
   `category` enum('Science','Art','Religion','History','Geography') NOT NULL,
+  `image` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`isbn`),
   KEY `publisher_id_idx` (`publisher_id`),
   CONSTRAINT `publisher_id` FOREIGN KEY (`publisher_id`) REFERENCES `publishers` (`publisher_id`)

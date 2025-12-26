@@ -1,10 +1,13 @@
-const getValidationErrors = (data ={}, isUpdate = false) => {
-    const { isbn, title, publication_year, price, stock, threshold, publisher_id, category } = data;
+const getValidationErrors = (data = {}, isUpdate = false) => {
+    const { isbn, title, publication_year, price, stock, threshold, publisher_id, category, author } = data;
     const errors = [];
 
     if (!isUpdate) {
         if (!isbn || !title || !publication_year || price === undefined || stock === undefined || threshold === undefined || !publisher_id || !category) {
             return ["All fields are required."];
+        }
+        if (!author || (Array.isArray(author) && author.length === 0)) {
+            return ["At least one author is required."];
         }
     }
 
@@ -12,10 +15,9 @@ const getValidationErrors = (data ={}, isUpdate = false) => {
     if (title && title.length > 255) errors.push("Title cannot exceed 255 characters.");
     if (price !== undefined && price < 0) errors.push("Price cannot be negative.");
     if (stock !== undefined && threshold !== undefined && stock < threshold) errors.push("Stock cannot be less than threshold.");
-    
+
     if (category && !["Science", "Art", "Religion", "History", "Geography"].includes(category)) {
-        errors.push("Invalid category.");
-    }
+    };
 
     return errors;
 };
