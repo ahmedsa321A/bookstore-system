@@ -15,12 +15,13 @@ interface FormInputProps {
     showPassword?: boolean;
     disabled?: boolean;
     onTogglePassword?: () => void;
+    maxLength?: number;
     onChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => void;
 }
 
-const   FormInput: React.FC<FormInputProps> = ({
+const FormInput: React.FC<FormInputProps> = ({
     label,
     id,
     name,
@@ -34,6 +35,7 @@ const   FormInput: React.FC<FormInputProps> = ({
     disabled = false,
     onTogglePassword,
     onChange,
+    maxLength,
 }) => {
     const isPassword = type === "password";
 
@@ -76,6 +78,7 @@ const   FormInput: React.FC<FormInputProps> = ({
                         onChange={onChange}
                         disabled={disabled}
                         placeholder={placeholder}
+                        maxLength={maxLength}
                         className={`${baseClasses} ${borderClasses} ${isPassword ? "pr-10" : ""
                             }`}
                     />

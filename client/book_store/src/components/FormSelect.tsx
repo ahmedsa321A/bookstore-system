@@ -56,7 +56,7 @@ const FormSelect: React.FC<FormSelectProps> = ({
                     id={id}
                     className={`
             flex items-center justify-between
-            bg-white
+              bg-input-background
             ${baseClasses}
             ${borderClasses}
           `}

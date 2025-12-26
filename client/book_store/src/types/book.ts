@@ -22,6 +22,7 @@ export interface AddBookErrors {
   category?: string;
   stockQuantity?: string;
   thresholdQuantity?: string;
+  image?: string;
 }
 
 export interface ModifyBookErrors {

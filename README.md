@@ -91,7 +91,6 @@
       "price": 29.99,
       "stock": 100,
       "threshold": 10,
-      "publisher_id": 1,
       "threshold": 10,
       "publisher_id": 1,
       "category": "Science",

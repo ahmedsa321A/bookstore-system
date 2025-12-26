@@ -3,7 +3,7 @@ import { BookPlus } from 'lucide-react';
 import { publishers, type AddBookErrors } from '../../types/book';
 import FormInput from '../../components/FormInput';
 import AlertCard from '../../components/AlertCard';
-import { validateAddBook } from '../../utils/helper';
+import { validateAddBook, uploadImageToImgbb } from '../../utils/helper';
 import FormSelect from '../../components/FormSelect';
 import { useMutation } from '@tanstack/react-query';
 import bookService from '../../api/bookService';
@@ -12,6 +12,7 @@ import bookService from '../../api/bookService';
 export function AddBook() {
   const [errors, setErrors] = useState<AddBookErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [alert, setAlert] = useState<{
     variant: 'success' | 'error';
     title?: string;
@@ -28,6 +29,7 @@ export function AddBook() {
     category: '',
     stockQuantity: '',
     thresholdQuantity: '',
+    image: '',
   });
 
   const handleChange = (
@@ -59,15 +61,27 @@ export function AddBook() {
         category: '',
         stockQuantity: '',
         thresholdQuantity: '',
+        image: '',
       });
       setErrors({});
       setIsSubmitting(false);
     },
     onError: (err: any) => {
+      const errorData = err.response?.data;
+      let errorMessage = 'Failed to add book.';
+
+      if (typeof errorData === 'string') {
+        errorMessage = errorData;
+      } else if (errorData?.errors && Array.isArray(errorData.errors)) {
+        errorMessage = errorData.errors.join(' ');
+      } else if (errorData?.error) {
+        errorMessage = errorData.error;
+      }
+
       setAlert({
         variant: 'error',
         title: 'Error',
-        message: err.response?.data || 'Failed to add book.',
+        message: errorMessage,
       });
       setIsSubmitting(false);
     }
@@ -105,7 +119,7 @@ export function AddBook() {
     // Only way this works is if backend accepts name OR we map it.
 
     const payload = {
-      isbn: formData.isbn,
+      isbn: formData.isbn.replace(/-/g, ''), // Normalize ISBN by removing dashes
       title: formData.title,
       publication_year: formData.publicationYear,
       price: parseFloat(formData.price),
@@ -116,7 +130,8 @@ export function AddBook() {
       // I will default to 1 for now to make it work, but this is technical debt.
       publisher: formData.publisher,
       category: formData.category,
-      author: formData.authors
+      author: formData.authors,
+      image: formData.image,
     };
 
     addMutation.mutate(payload);
@@ -146,6 +161,31 @@ export function AddBook() {
     }));
   };
 
+
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const imageUrl = await uploadImageToImgbb(file);
+      setFormData(prev => ({ ...prev, image: imageUrl }));
+      setAlert({
+        variant: 'success',
+        title: 'Upload Success',
+        message: 'Image uploaded successfully!',
+      });
+    } catch (error) {
+      setAlert({
+        variant: 'error',
+        title: 'Upload Failed',
+        message: 'Failed to upload image. Please try again.',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div>
@@ -311,6 +351,31 @@ export function AddBook() {
               onChange={handleChange}
             />
 
+
+            <div className="md:col-span-2">
+              <label className="block mb-2 text-sm font-medium text-gray-700">Book Cover Image</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                  className="block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-primary file:text-white
+                        hover:file:bg-primary/90"
+                />
+                {isUploading && <span className="text-sm text-muted-foreground">Uploading...</span>}
+              </div>
+              {errors.image && <p className="text-sm text-destructive mt-1">{errors.image}</p>}
+              {formData.image && (
+                <div className="mt-2">
+                  <img src={formData.image} alt="Book Preview" className="h-32 w-auto object-cover rounded border" />
+                </div>
+              )}
+            </div>
             <div className="md:col-span-2">
               <button
                 type="submit"

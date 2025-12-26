@@ -25,65 +25,72 @@ exports.addBook = async (req, res) => {
         if (existingBooks.length > 0)
             return res.status(409).json("Book with this ISBN already exists!");
 
+        await query("START TRANSACTION");
+
         // 1. Handle Authors
         const authorNames = Array.isArray(author) ? author : [author];
         const authorIds = [];
 
-        for (const authorName of authorNames) {
-            if (!authorName) continue;
-            const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [authorName]);
+        try {
+            for (const authorName of authorNames) {
+                if (!authorName) continue;
+                // Check author existence (lowercase keys based on schema check)
+                const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [authorName]);
 
-            if (existingAuthor.length > 0) {
-                authorIds.push(existingAuthor[0].author_id);
-            } else {
-                const result = await query("INSERT INTO authors (name) VALUES (?)", [authorName]);
-                authorIds.push(result.insertId);
+                if (existingAuthor.length > 0) {
+                    authorIds.push(existingAuthor[0].author_id);
+                } else {
+                    const result = await query("INSERT INTO authors (name) VALUES (?)", [authorName]);
+                    authorIds.push(result.insertId);
+                }
             }
-        }
 
-        // 2. Handle Publisher
-        let publisherId = null;
-        if (publisher) {
-            const existingPublisher = await query("SELECT publisher_id FROM Publishers WHERE Name = ?", [publisher]);
-            if (existingPublisher.length > 0) {
-                publisherId = existingPublisher[0].publisher_id;
-            } else {
-                // Determine a default address/phone or leave null if allowed, strictly insert Name for now
-                // Schema likely requires fields? 'initPublisherOrders.js' didn't show Publishers schema.
-                // Assuming Name is enough or others nullable. 
-                // 'addPublisher' controller uses Name, Address, Phone. 
-                // Let's insert with defaults if needed.
-                const result = await query("INSERT INTO Publishers (Name, Address, Phone) VALUES (?, ?, ?)", [publisher, 'Unknown', 'Unknown']);
-                publisherId = result.insertId;
+            // 2. Handle Publisher
+            let publisherId = null;
+            if (publisher) {
+                // Check publisher existence (lowercase keys based on schema check)
+                const existingPublisher = await query("SELECT publisher_id FROM Publishers WHERE Name = ?", [publisher]);
+                if (existingPublisher.length > 0) {
+                    publisherId = existingPublisher[0].publisher_id;
+                } else {
+                    const result = await query("INSERT INTO Publishers (Name, Address, Phone) VALUES (?, ?, ?)", [publisher, 'Unknown', 'Unknown']);
+                    publisherId = result.insertId;
+                }
             }
+
+            // 3. Handle Image
+            const finalImage = image || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&q=80&w=2730&ixlib=rb-4.0.3';
+
+            // 4. Insert Book
+            const insertQuery =
+                "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category, Image) VALUES (?)";
+            const values = [
+                isbn,
+                title,
+                publication_year,
+                price,
+                stock,
+                threshold,
+                publisherId,
+                category,
+                finalImage,
+            ];
+
+            await query(insertQuery, [values]);
+
+            // 5. Link Book and Authors
+            for (const authId of authorIds) {
+                await query("INSERT INTO bookauthors (isbn, author_id) VALUES (?, ?)", [isbn, authId]);
+            }
+
+            await query("COMMIT");
+            return res.status(201).json("Book added successfully!");
+
+        } catch (innerErr) {
+            await query("ROLLBACK");
+            throw innerErr;
         }
 
-        // 3. Handle Image
-        const finalImage = image || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&q=80&w=2730&ixlib=rb-4.0.3';
-
-        // 4. Insert Book
-        const insertQuery =
-            "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category, Image) VALUES (?)";
-        const values = [
-            isbn,
-            title,
-            publication_year,
-            price,
-            stock,
-            threshold,
-            publisherId,
-            category,
-            finalImage,
-        ];
-
-        await query(insertQuery, [values]);
-
-        // 5. Link Book and Authors
-        for (const authId of authorIds) {
-            await query("INSERT INTO bookauthors (isbn, author_id) VALUES (?, ?)", [isbn, authId]);
-        }
-
-        return res.status(201).json("Book added successfully!");
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -98,29 +105,20 @@ exports.modifyBook = async (req, res) => {
         ]);
         if (results.length === 0) return res.status(404).json("Book not found!");
 
+        // Normalized keys from DB are lowercase
         let currentBook = results[0];
         const updates = req.body;
 
-        if (updates.title) currentBook.Title = updates.title;
-        if (updates.publication_year)
-            currentBook.publication_year = updates.publication_year;
-        if (updates.price !== undefined) currentBook.Price = updates.price;
-        if (updates.threshold !== undefined)
-            currentBook.Threshold = updates.threshold;
-        if (updates.publisher_id) currentBook.publisher_id = updates.publisher_id;
-        if (updates.category) currentBook.Category = updates.category;
-        if (updates.image) currentBook.Image = updates.image;
-
-        if (updates.stock !== undefined) {
-            if (updates.stock < 0) {
-                return res.status(400).json("Stock cannot be negative.");
-            }
-            currentBook.Stock = updates.stock;
-        }
-
-        if (currentBook.Stock < currentBook.Threshold) {
-            return res.status(400).json("Stock cannot be less than threshold.");
-        }
+        // Use correct casing for keys (lowercase from DB query)
+        // Values to update:
+        const newTitle = updates.title || currentBook.title;
+        const newYear = updates.publication_year || currentBook.publication_year;
+        const newPrice = updates.price !== undefined ? updates.price : currentBook.price;
+        const newStock = updates.stock !== undefined ? updates.stock : currentBook.stock;
+        const newThreshold = updates.threshold !== undefined ? updates.threshold : currentBook.threshold;
+        const newPubId = updates.publisher_id || currentBook.publisher_id;
+        const newCategory = updates.category || currentBook.category;
+        const newImage = updates.image || currentBook.image;
 
         const updateQuery = `
       UPDATE Books 
@@ -128,20 +126,23 @@ exports.modifyBook = async (req, res) => {
       WHERE ISBN = ?`;
 
         const values = [
-            currentBook.Title,
-            currentBook.publication_year,
-            currentBook.Price,
-            currentBook.Stock,
-            currentBook.Threshold,
-            currentBook.publisher_id,
-            currentBook.Category,
-            currentBook.Image,
+            newTitle,
+            newYear,
+            newPrice,
+            newStock,
+            newThreshold,
+            newPubId,
+            newCategory,
+            newImage,
             targetISBN,
         ];
 
         await query(updateQuery, values);
         return res.status(200).json("Book modified successfully!");
     } catch (err) {
+        if (err.sqlState === '45000') {
+            return res.status(400).json(err.message);
+        }
         return res.status(500).json({ error: err.message });
     }
 };

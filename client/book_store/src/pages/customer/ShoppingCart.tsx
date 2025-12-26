@@ -7,7 +7,7 @@ export function ShoppingCart() {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const total = subtotal ;
+  const total = subtotal;
 
   return (
     <div>
@@ -76,9 +76,13 @@ export function ShoppingCart() {
                             </button>
                             <span className="w-8 text-center">{item.quantity}</span>
                             <button
-                              onClick={() => dispatch(updateQuantity({ isbn: item.isbn, quantity: Math.max(1, item.quantity +1) }))
-                              }
-                              className="w-8 h-8 flex items-center justify-center bg-secondary rounded hover:bg-secondary/80 transition-colors"
+                              onClick={() => dispatch(updateQuantity({ isbn: item.isbn, quantity: item.quantity + 1 }))}
+                              disabled={item.quantity >= item.stockQuantity}
+                              title={item.quantity >= item.stockQuantity ? "Max stock reached" : "Increase quantity"}
+                              className={`w-8 h-8 flex items-center justify-center bg-secondary rounded transition-colors ${item.quantity >= item.stockQuantity
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : 'hover:bg-secondary/80'
+                                }`}
                             >
                               +
                             </button>
@@ -112,7 +116,7 @@ export function ShoppingCart() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
-              
+
                 <div className="border-t border-border pt-3 flex justify-between">
                   <span>Total</span>
                   <span className="text-primary">${total.toFixed(2)}</span>

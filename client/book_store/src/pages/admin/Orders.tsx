@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, CheckCircle, AlertTriangle, Users, Truck, ShoppingCart } from 'lucide-react';
+import { Package, CheckCircle, AlertTriangle, Truck } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import orderService from '../../api/orderService';
 import Loading from '../../components/Loading';
@@ -7,7 +7,7 @@ import AlertCard from '../../components/AlertCard';
 
 export function Orders() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'customers' | 'auto' | 'confirm'>('customers');
+  const [activeTab, setActiveTab] = useState<'auto' | 'confirm'>('auto');
   const [alert, setAlert] = useState<{
     variant: 'success' | 'error';
     title?: string;
@@ -16,11 +16,7 @@ export function Orders() {
 
   // --- Queries ---
 
-  const { data: customerOrders = [], isLoading: isLoadingCustomers } = useQuery({
-    queryKey: ['orders', 'customers'],
-    queryFn: orderService.getAllCustomerOrders,
-    enabled: activeTab === 'customers',
-  });
+
 
   const { data: lowStockBooks = [], isLoading: isLoadingLowStock } = useQuery({
     queryKey: ['orders', 'low-stock'],
@@ -42,17 +38,7 @@ export function Orders() {
 
   // --- Mutations ---
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string | number, status: string }) =>
-      orderService.updateCustomerOrderStatus(id, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders', 'customers'] });
-      setAlert({ variant: 'success', message: 'Order status updated successfully.' });
-    },
-    onError: (err: any) => {
-      setAlert({ variant: 'error', title: 'Update Failed', message: err.response?.data || 'Failed to update status.' });
-    }
-  });
+
 
   const placeOrderMutation = useMutation({
     mutationFn: ({ isbn, quantity }: { isbn: string, quantity: number }) =>
@@ -81,9 +67,7 @@ export function Orders() {
 
   // --- Handlers ---
 
-  const handleStatusChange = (orderId: string | number, newStatus: string) => {
-    updateStatusMutation.mutate({ id: orderId, status: newStatus });
-  };
+
 
   const handleAutoOrder = (book: any) => {
     // Logic: Order double the threshold minus current stock, or at least threshold
@@ -124,16 +108,7 @@ export function Orders() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        <button
-          onClick={() => setActiveTab('customers')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'customers'
-            ? 'bg-primary text-white'
-            : 'bg-white text-foreground hover:bg-secondary'
-            }`}
-        >
-          <ShoppingCart size={18} />
-          Customer Orders
-        </button>
+
         <button
           onClick={() => setActiveTab('auto')}
           className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'auto'
@@ -156,77 +131,7 @@ export function Orders() {
         </button>
       </div>
 
-      {/* Customer Orders Tab */}
-      {activeTab === 'customers' && (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-6 bg-secondary border-b border-border">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <h2>Customer Orders</h2>
-            </div>
-          </div>
-          {isLoadingCustomers ? <Loading size="medium" /> : customerOrders.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">No customer orders found.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-secondary/50">
-                  <tr>
-                    <th className="px-6 py-3 text-left">Order ID</th>
-                    <th className="px-6 py-3 text-left">Customer</th>
-                    <th className="px-6 py-3 text-left">Date</th>
-                    <th className="px-6 py-3 text-left">Items</th>
-                    <th className="px-6 py-3 text-left">Total</th>
-                    <th className="px-6 py-3 text-left">Status</th>
-                    <th className="px-6 py-3 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {customerOrders.map((order: any) => (
-                    <tr key={order.order_id} className="hover:bg-secondary/30">
-                      <td className="px-6 py-4 font-mono text-sm">#{order.order_id}</td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium">{order.customer_name}</div>
-                        <div className="text-xs text-muted-foreground">{order.email}</div>
-                      </td>
-                      <td className="px-6 py-4">{new Date(order.order_date).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 text-sm">
-                        {order.items?.map((item: any) => (
-                          <div key={item.isbn}>{item.quantity}x {item.title || item.isbn}</div>
-                        ))}
-                      </td>
-                      <td className="px-6 py-4 font-bold">${Number(order.total_price).toFixed(2)}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-semibold
-                                ${order.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                            order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
-                              order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
-                          }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <select
-                          className="border rounded px-2 py-1 text-sm bg-white"
-                          value={order.status}
-                          onChange={(e) => handleStatusChange(order.order_id, e.target.value)}
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Processing">Processing</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Delivered">Delivered</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* Auto Order Tab */}
       {activeTab === 'auto' && (

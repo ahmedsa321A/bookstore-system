@@ -12,6 +12,7 @@ export function Checkout() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     cardNumber: '',
+    expiryDate: '',
   });
   const [errors, setErrors] = useState<{ cardNumber?: string; expiryDate?: string }>({});
   const [alert, setAlert] = useState<{
@@ -37,7 +38,7 @@ export function Checkout() {
   };
 
   const validateForm = () => {
-    const newErrors: { cardNumber?: string} = {};
+    const newErrors: { cardNumber?: string; expiryDate?: string } = {};
     let isValid = true;
 
     if (!formData.cardNumber) {
@@ -45,6 +46,14 @@ export function Checkout() {
       isValid = false;
     } else if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ''))) {
       newErrors.cardNumber = 'Credit Card Number must be 16 digits';
+      isValid = false;
+    }
+
+    if (!formData.expiryDate) {
+      newErrors.expiryDate = 'Expiry Date is required';
+      isValid = false;
+    } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.expiryDate)) {
+      newErrors.expiryDate = 'Format must be MM/YY';
       isValid = false;
     }
 
@@ -78,9 +87,11 @@ export function Checkout() {
       setAlert({
         variant: "success",
         title: "Payment Successful",
-        message: "Your payment has been processed successfully!",
+        message: response,
       });
-      dispatch(clearCart());
+      setTimeout(() => {
+        dispatch(clearCart());
+      }, 3000);
 
     } catch (error) {
       console.error("Error placing order:", error);
@@ -91,7 +102,7 @@ export function Checkout() {
       });
       return;
     }
- 
+
   };
 
   if (cartItems.length === 0) {
@@ -136,6 +147,17 @@ export function Checkout() {
                   error={errors.cardNumber}
                   onChange={handleChange}
                   placeholder="1234 5678 9012 3456"
+                />
+                <FormInput
+                  label="Expiry Date"
+                  id="expiryDate"
+                  name="expiryDate"
+                  type="text"
+                  value={formData.expiryDate}
+                  error={errors.expiryDate}
+                  onChange={handleChange}
+                  placeholder="MM/YY"
+                  maxLength={5}
                 />
 
               </div>

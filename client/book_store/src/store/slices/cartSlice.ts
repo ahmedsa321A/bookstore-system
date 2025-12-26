@@ -21,9 +21,13 @@ const cartSlice = createSlice({
                 (i) => i.isbn === action.payload.isbn
             );
             if (item) {
-                item.quantity += 1;
+                if (item.quantity < item.stockQuantity) {
+                    item.quantity += 1;
+                }
             } else {
-                state.items.push({ ...action.payload, quantity: 1 });
+                if (action.payload.stockQuantity > 0) {
+                    state.items.push({ ...action.payload, quantity: 1 });
+                }
             }
             saveCart(state.items);
         },
@@ -33,11 +37,12 @@ const cartSlice = createSlice({
             action: PayloadAction<{ isbn: string; quantity: number }>
         ) => {
             const item = state.items.find(
-                (i) => i.isbn=== action.payload.isbn
+                (i) => i.isbn === action.payload.isbn
             );
 
             if (item) {
-                item.quantity = action.payload.quantity;
+                const newQuantity = Math.min(action.payload.quantity, item.stockQuantity);
+                item.quantity = newQuantity;
             }
 
             saveCart(state.items);

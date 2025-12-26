@@ -18,6 +18,12 @@ const orderService = {
         return response.data;
     },
 
+    // GET /api/orders/getCustomerOrderHistory
+    getMyOrders: async (): Promise<any[]> => {
+        const response = await api.get<any[]>('/orders/getCustomerOrderHistory');
+        return response.data;
+    },
+
     // Admin Methods
 
     // GET /api/orders/admin/all

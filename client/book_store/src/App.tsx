@@ -33,7 +33,7 @@ export default function App() {
         ))}
 
         {/* Admin Routes */}
-        <Route element={<ProtectedRoute allowedRole="CUSTOMER" />}>
+        <Route element={<ProtectedRoute allowedRole="ADMIN" />}>
           <Route
             path={adminRoutes.path}
             element={adminRoutes.element}

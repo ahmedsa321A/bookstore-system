@@ -45,10 +45,16 @@ exports.getAllCustomerOrders = async (req, res) => {
                 oi.isbn, 
                 oi.quantity, 
                 oi.price, 
-                b.Title as title 
+                b.Title as title,
+                p.Name as publisher,
+                GROUP_CONCAT(a.Name SEPARATOR ', ') as authors
             FROM order_items oi
             JOIN Books b ON oi.isbn = b.ISBN
+            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
+            LEFT JOIN BookAuthors ba ON b.ISBN = ba.isbn
+            LEFT JOIN Authors a ON ba.author_id = a.author_id
             WHERE oi.order_id IN (?)
+            GROUP BY oi.order_id, oi.isbn
         `;
 
         const items = await query(itemsQuery, [orderIds]);
@@ -59,7 +65,12 @@ exports.getAllCustomerOrders = async (req, res) => {
 
         items.forEach(item => {
             if (ordersMap[item.order_id]) {
-                ordersMap[item.order_id].items.push(item);
+                // Transform authors string to array
+                const itemWithAuthors = {
+                    ...item,
+                    authors: item.authors ? item.authors.split(', ') : []
+                };
+                ordersMap[item.order_id].items.push(itemWithAuthors);
             }
         });
 
@@ -88,12 +99,19 @@ exports.updateCustomerOrderStatus = async (req, res) => {
 exports.getLowStockBooks = async (req, res) => {
     try {
         const books = await query(`
-            SELECT Books.*, Publishers.Name as publisher 
+            SELECT Books.*, Publishers.Name as publisher, GROUP_CONCAT(Authors.Name SEPARATOR ', ') as authors 
             FROM Books 
             LEFT JOIN Publishers ON Books.publisher_id = Publishers.publisher_id
+            LEFT JOIN BookAuthors ON Books.ISBN = BookAuthors.isbn
+            LEFT JOIN Authors ON BookAuthors.author_id = Authors.author_id
             WHERE Stock < Threshold
+            GROUP BY Books.ISBN
         `);
-        return res.status(200).json(books);
+        const mappedBooks = books.map(b => ({
+            ...b,
+            authors: b.authors ? b.authors.split(', ') : []
+        }));
+        return res.status(200).json(mappedBooks);
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -109,13 +127,21 @@ exports.getAllPublisherOrders = async (req, res) => {
                 p.Name as publisher,
                 po.quantity as orderQuantity,
                 po.status,
-                po.order_date as date
+                po.order_date as date,
+                GROUP_CONCAT(Authors.Name SEPARATOR ', ') as authors
             FROM publisher_orders po
             JOIN Books b ON po.isbn = b.ISBN
             LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
+            LEFT JOIN BookAuthors ON b.ISBN = BookAuthors.isbn
+            LEFT JOIN Authors ON BookAuthors.author_id = Authors.author_id
+            GROUP BY po.order_id
             ORDER BY po.order_date DESC
         `);
-        return res.status(200).json(orders);
+        const mappedOrders = orders.map(o => ({
+            ...o,
+            authors: o.authors ? o.authors.split(', ') : []
+        }));
+        return res.status(200).json(mappedOrders);
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }

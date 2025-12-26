@@ -1,13 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, ChevronDown, ChevronUp } from 'lucide-react';
-import { customerOrders } from '../../types/book';
+import orderService from '../../api/orderService';
+
+interface Order {
+  order_id: number;
+  order_date: string;
+  total_price: number;
+  items: {
+    isbn: string;
+    title: string;
+    quantity: number;
+    unit_price: number;
+  }[];
+}
 
 export function PastOrders() {
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
 
-  const toggleOrder = (orderId: string) => {
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await orderService.getMyOrders();
+        setOrders(data);
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const toggleOrder = (orderId: number) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
+
+  if (loading) {
+    return <div className="p-8 text-center">Loading orders...</div>;
+  }
 
   return (
     <div>
@@ -19,7 +52,7 @@ export function PastOrders() {
         <p className="text-muted-foreground">View your order history and details</p>
       </div>
 
-      {customerOrders.length === 0 ? (
+      {orders.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h2 className="mb-2">No Orders Yet</h2>
@@ -27,22 +60,22 @@ export function PastOrders() {
         </div>
       ) : (
         <div className="space-y-4">
-          {customerOrders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+          {orders.map((order) => (
+            <div key={order.order_id} className="bg-white rounded-lg shadow-md overflow-hidden">
               {/* Order Header */}
               <div
                 className="p-6 cursor-pointer hover:bg-secondary/20 transition-colors"
-                onClick={() => toggleOrder(order.id)}
+                onClick={() => toggleOrder(order.order_id)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <p className="text-muted-foreground text-sm">Order ID</p>
-                      <p className="font-mono">{order.id}</p>
+                      <p className="font-mono">#{order.order_id}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-sm">Date</p>
-                      <p>{order.date}</p>
+                      <p>{new Date(order.order_date).toLocaleDateString()}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-sm">Items</p>
@@ -50,24 +83,12 @@ export function PastOrders() {
                     </div>
                     <div>
                       <p className="text-muted-foreground text-sm">Total</p>
-                      <p className="text-primary">${order.total.toFixed(2)}</p>
+                      <p className="text-primary">${Number(order.total_price).toFixed(2)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm ${
-                        order.status === 'Delivered'
-                          ? 'bg-green-100 text-green-800'
-                          : order.status === 'Shipped'
-                          ? 'bg-blue-100 text-blue-800'
-                          : order.status === 'Processing'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {order.status}
-                    </span>
-                    {expandedOrder === order.id ? (
+
+                    {expandedOrder === order.order_id ? (
                       <ChevronUp className="h-5 w-5 text-muted-foreground" />
                     ) : (
                       <ChevronDown className="h-5 w-5 text-muted-foreground" />
@@ -77,19 +98,8 @@ export function PastOrders() {
               </div>
 
               {/* Order Details */}
-              {expandedOrder === order.id && (
+              {expandedOrder === order.order_id && (
                 <div className="border-t border-border p-6 bg-secondary/10">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <h3 className="mb-3">Shipping Address</h3>
-                      <p className="text-muted-foreground">{order.shippingAddress}</p>
-                    </div>
-                    <div>
-                      <h3 className="mb-3">Payment Method</h3>
-                      <p className="text-muted-foreground">{order.paymentMethod}</p>
-                    </div>
-                  </div>
-
                   <h3 className="mb-4">Order Items</h3>
                   <div className="bg-white rounded-lg overflow-hidden">
                     <table className="w-full">
@@ -108,9 +118,9 @@ export function PastOrders() {
                             <td className="px-4 py-3">{item.title}</td>
                             <td className="px-4 py-3 font-mono text-sm">{item.isbn}</td>
                             <td className="px-4 py-3">{item.quantity}</td>
-                            <td className="px-4 py-3">${item.price.toFixed(2)}</td>
+                            <td className="px-4 py-3">${Number(item.unit_price).toFixed(2)}</td>
                             <td className="px-4 py-3 text-primary">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              ${(Number(item.unit_price) * item.quantity).toFixed(2)}
                             </td>
                           </tr>
                         ))}
@@ -121,7 +131,7 @@ export function PastOrders() {
                             <span>Total:</span>
                           </td>
                           <td className="px-4 py-3 text-primary">
-                            ${order.total.toFixed(2)}
+                            ${Number(order.total_price).toFixed(2)}
                           </td>
                         </tr>
                       </tfoot>

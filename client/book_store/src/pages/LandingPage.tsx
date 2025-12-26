@@ -29,7 +29,7 @@ export function LandingPage() {
     if (state.isAuthenticated) {
       const role = state.user?.role;
       if (role === 'ADMIN') {
-        navigate('/admin/dashboard');
+        navigate('/admin/add-book');
       } else if (role === 'CUSTOMER') {
         navigate('/customer/search');
       }

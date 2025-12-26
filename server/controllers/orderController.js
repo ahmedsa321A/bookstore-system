@@ -110,11 +110,17 @@ exports.getCustomerOrderHistory = async (req, res) => {
                 oi.quantity, 
                 oi.price AS unit_price,
                 b.title, 
-                b.image
+                b.image,
+                p.Name as publisher,
+                GROUP_CONCAT(a.Name SEPARATOR ', ') as authors
             FROM customer_orders co
             JOIN order_items oi ON co.order_id = oi.order_id
             JOIN books b ON oi.isbn = b.isbn
+            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
+            LEFT JOIN BookAuthors ba ON b.isbn = ba.isbn
+            LEFT JOIN Authors a ON ba.author_id = a.author_id
             WHERE co.customer_id = ?
+            GROUP BY co.order_id, oi.isbn
             ORDER BY co.order_date DESC, co.order_id DESC
         `;
 
@@ -123,7 +129,6 @@ exports.getCustomerOrderHistory = async (req, res) => {
         if (rows.length === 0) {
             return res.status(200).json([]);
         }
-
 
 
         const ordersMap = new Map();
@@ -143,7 +148,9 @@ exports.getCustomerOrderHistory = async (req, res) => {
                 title: row.title,
                 image: row.image,
                 quantity: row.quantity,
-                unit_price: row.unit_price
+                unit_price: row.unit_price,
+                publisher: row.publisher || 'Unknown Publisher',
+                authors: row.authors ? row.authors.split(', ') : ['Unknown Author']
             });
         }
 

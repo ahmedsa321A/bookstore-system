@@ -3,6 +3,7 @@ import type { ValidateProps } from "../types/signup";
 import type { CartItem } from '../types/cart';
 import type { AddBookErrors, ModifyBookErrors } from "../types/book";
 const CART_KEY = 'cart';
+const imgbbAPIKey = "30b3dbd0a1d5ebbb00bb0be489129544";
 
 
 export const validateSignup = ({
@@ -138,15 +139,15 @@ export const validateEditProfile = ({
     }
 
     // --- Password Change (Optional) ---
-    if(current_password && current_password.trim() !== "") {
+    if (current_password && current_password.trim() !== "") {
         // If Current Password is provided, New Password must be provided
         if (!new_password || new_password.trim() === "") {
             errors.new_password = "New password is required";
         }
-        if(confirm_password === undefined || confirm_password.trim() === "") {
+        if (confirm_password === undefined || confirm_password.trim() === "") {
             errors.confirm_password = "Please confirm your new password";
         }
-        if(new_password === current_password) {
+        if (new_password === current_password) {
             errors.new_password = "New password must be different from current password";
         }
     }
@@ -184,6 +185,7 @@ interface ValidateAddBookProps {
     category: string;
     stockQuantity: string;
     thresholdQuantity: string;
+    image: string;
     errors: AddBookErrors;
 }
 
@@ -197,6 +199,7 @@ export const validateAddBook = ({
     category,
     stockQuantity,
     thresholdQuantity,
+    image,
     errors,
 }: ValidateAddBookProps) => {
     // ISBN
@@ -256,6 +259,11 @@ export const validateAddBook = ({
     } else if (Number(thresholdQuantity) > Number(stockQuantity)) {
         errors.thresholdQuantity = "Threshold cannot exceed stock quantity";
     }
+
+    // Image Validation
+    if (!image) {
+        errors.image = "Book cover image is required";
+    }
 };
 
 export function validateModifyBook(data: any): ModifyBookErrors {
@@ -288,6 +296,24 @@ export function validateModifyBook(data: any): ModifyBookErrors {
     return errors;
 }
 
+
+export async function uploadImageToImgbb(imageFile: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("image", imageFile);
+    const response = await fetch(
+        `https://api.imgbb.com/1/upload?key=${imgbbAPIKey}`,
+        {
+            method: "POST",
+            body: formData,
+        }
+    );
+    const data = await response.json();
+    if (data.success) {
+        return data.data.url;
+    } else {
+        throw new Error("Failed to upload image");
+    }
+}
 
 
 export const loadCart = (): CartItem[] => {
