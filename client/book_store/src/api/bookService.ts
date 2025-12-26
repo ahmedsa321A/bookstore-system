@@ -10,13 +10,10 @@ export interface BookSearchFilters {
     publisher?: string;
 }
 
-// Helper to transform backend book to frontend Book type
 const transformBook = (data: any): Book => {
     return {
         isbn: data.isbn,
         title: data.title,
-        // Backend returns authors as matched array, or comma-separated string if from raw SQL without map. 
-        // Our controller now returns array, but let's be safe.
         authors: Array.isArray(data.authors) ? data.authors : (data.authors || '').split(',').filter(Boolean),
         publisher: data.publisher_name || 'Unknown Publisher',
         publisher_name: data.publisher_name,
@@ -26,7 +23,6 @@ const transformBook = (data: any): Book => {
         category: data.category,
         stockQuantity: data.stock,
         thresholdQuantity: data.threshold,
-        // Backend doesn't have image/description yet, use defaults
         image: data.image || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=1080&auto=format&fit=crop',
         description: data.description || 'No description available.',
         featured: false, // Default
@@ -47,7 +43,6 @@ const bookService = {
             const response = await api.get<any[]>(`/books/search?${params.toString()}`);
             return response.data.map(transformBook);
         } catch (error: any) {
-            // If 404, it means no books found (per current backend logic). Return empty array.
             if (error.response && error.response.status === 404) {
                 return [];
             }
@@ -57,8 +52,6 @@ const bookService = {
 
     // POST /api/books/add
     addBook: async (data: any): Promise<void> => {
-        // Map frontend CamelCase to backend expected format if needed, but controller seems to accept mixed?
-        // Controller expects: isbn, title, publication_year, price, stock, threshold, publisher_id, category, image, author (name/array)
         await api.post('/books/add', data);
     },
 

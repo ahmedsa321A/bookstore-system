@@ -9,10 +9,15 @@ import FormSelect from '../../components/FormSelect';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import bookService from '../../api/bookService';
 import Loading from '../../components/Loading';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export function ModifyBooks() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const categories = ['All', 'Science', 'Art', 'Religion', 'History', 'Geography'];
   const [editingIsbn, setEditingIsbn] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>(null);
   const [errors, setErrors] = useState<any>({});
@@ -25,11 +30,12 @@ export function ModifyBooks() {
 
   // Fetch books from backend
   const { data: books = [], isLoading } = useQuery({
-    queryKey: ['books', searchQuery],
+    queryKey: ['books', debouncedSearchQuery, selectedCategory],
     queryFn: () => bookService.searchBooks({
       // If query is ISBN-like, search by ISBN, else Title
-      isbn: /^[0-9-]+$/.test(searchQuery) && searchQuery.length > 5 ? searchQuery : undefined,
-      title: !(/^[0-9-]+$/.test(searchQuery)) ? searchQuery : undefined
+      isbn: /^[0-9-]+$/.test(debouncedSearchQuery) && debouncedSearchQuery.length > 5 ? debouncedSearchQuery : undefined,
+      title: !(/^[0-9-]+$/.test(debouncedSearchQuery)) ? debouncedSearchQuery : undefined,
+      category: selectedCategory !== 'All' ? selectedCategory : undefined,
     }),
   });
 
@@ -133,8 +139,8 @@ export function ModifyBooks() {
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative max-w-2xl">
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <input
             type="text"
@@ -142,6 +148,17 @@ export function ModifyBooks() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by ISBN or title..."
             className="w-full pl-12 pr-4 py-3 bg-white rounded-lg border border-border focus:border-primary focus:outline-none transition-colors shadow-sm"
+          />
+        </div>
+        <div className="w-full md:w-48">
+          <FormSelect
+            label=""
+            id="filter-category"
+            name="filter-category"
+            value={selectedCategory}
+            options={categories.map(c => ({ label: c, value: c }))}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            bgColor="bg-white"
           />
         </div>
       </div>
