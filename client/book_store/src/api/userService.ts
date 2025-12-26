@@ -9,7 +9,7 @@ const userService = {
         const response = await api.put<User>(`/users/${id}`, data);
         return response.data as unknown as updatedUserResponse;
     },
-
+    
 };
 
 export default userService;

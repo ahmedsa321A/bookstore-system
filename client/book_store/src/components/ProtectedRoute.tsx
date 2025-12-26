@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRole, redirectTo = '/login' }: ProtectedRouteProps) => {
-    const { user, isAuthenticated,loading} = useSelector((state: RootState) => state.auth);
+  const { user, isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
 
   // Still fetching user from backend
   if (loading) return <Loading size="large" text="Loading..." color="#4A90E2" />;
@@ -19,7 +19,7 @@ const ProtectedRoute = ({ allowedRole, redirectTo = '/login' }: ProtectedRoutePr
   if (!isAuthenticated || !user) return <Navigate to={redirectTo} replace />;
 
   // Logged in but wrong role
-  if (user.Role !== allowedRole) return <Navigate to="/unauthorized" replace />;
+  if (user.role !== allowedRole) return <Navigate to="/unauthorized" replace />;
 
   // Authorized
   return <Outlet />;

@@ -14,12 +14,11 @@ const categories = [
 
 export function LandingPage() {
   const featuredBooks = books.filter((book) => book.featured).slice(0, 6);
-  const state = useAppSelector((state) => state.auth); 
+  const state = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
-
   useEffect(() => {
     if (state.isAuthenticated) {
-      const role = state.user?.Role;
+      const role = state.user?.role;
       if (role === 'ADMIN') {
         navigate('/admin/dashboard');
       } else if (role === 'CUSTOMER') {
@@ -27,7 +26,7 @@ export function LandingPage() {
       }
     }
   }
-  , [state]);
+    , [state]);
 
   return (
     <div>

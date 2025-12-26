@@ -1,13 +1,13 @@
 
 export interface User {
-  UserID: number;
-  Username: string;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  Phone: string;
-  Address: string;
-  Role: string;
+  user_id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
 }
 
 export interface SignupRequest {

@@ -5,12 +5,13 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { clearCart } from '../../store/slices/cartSlice';
 import FormInput from '../../components/FormInput';
 import AlertCard from '../../components/AlertCard';
+import type { CheckoutRequest } from '../../api/orderService';
+import orderService from '../../api/orderService';
 
 export function Checkout() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     cardNumber: '',
-    expiryDate: '',
   });
   const [errors, setErrors] = useState<{ cardNumber?: string; expiryDate?: string }>({});
   const [alert, setAlert] = useState<{
@@ -52,7 +53,7 @@ export function Checkout() {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAlert(null);
 
@@ -64,13 +65,33 @@ export function Checkout() {
       });
       return;
     }
-    console.log('Processing payment with data:', formData);
-    setAlert({
-      variant: "success",
-      title: "Payment Successful",
-      message: "Your payment has been processed successfully!",
-    });
-    // dispatch(clearCart());
+    const orderRequest: CheckoutRequest = {
+      cardNumber: formData.cardNumber,
+      cartItems: cartItems.map((item) => ({
+        isbn: item.isbn,
+        quantity: item.quantity,
+      })),
+    };
+    try {
+      const response = await orderService.checkout(orderRequest);
+      console.log(response);
+      setAlert({
+        variant: "success",
+        title: "Payment Successful",
+        message: "Your payment has been processed successfully!",
+      });
+      dispatch(clearCart());
+
+    } catch (error) {
+      console.error("Error placing order:", error);
+      setAlert({
+        variant: "error",
+        title: "Payment Error",
+        message: "Failed to process payment. Please try again.",
+      });
+      return;
+    }
+ 
   };
 
   if (cartItems.length === 0) {

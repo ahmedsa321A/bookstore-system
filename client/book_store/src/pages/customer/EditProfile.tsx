@@ -17,11 +17,11 @@ export function EditProfile() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [formData, setFormData] = useState<EditProfileFormState>({
-    first_name: user?.FirstName || '',
-    last_name: user?.LastName || '',
-    email: user?.Email || '',
-    phone: user?.Phone || '',
-    address: user?.Address || '',
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    address: user?.address || '',
     current_password: '',
     new_password: '',
     confirm_password: '',
@@ -66,7 +66,7 @@ export function EditProfile() {
     }
     setIsSubmitting(false);
     try {
-      const userId = user?.UserID;
+      const userId = user?.user_id;
       if (!userId) {
         setAlert({
           variant: "error",
@@ -78,11 +78,11 @@ export function EditProfile() {
       }
       const res = await userService.update(userId, formData);
       dispatch(setUser({
-        FirstName: formData.first_name,
-        LastName: formData.last_name,
-        Email: formData.email,
-        Phone: formData.phone,
-        Address: formData.address,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
       }));
       setAlert({
         variant: "success",

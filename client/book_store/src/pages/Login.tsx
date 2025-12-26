@@ -34,16 +34,16 @@ export function Login() {
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  
+
   useEffect(() => {
     if (user) {
-      if (user.Role === "Admin") {
+      if (user.role === "ADMIN") {
         navigate("/admin");
       } else {
         navigate("/customer");
       }
     }
-  } , [user, navigate]);
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -69,15 +69,15 @@ export function Login() {
     }
 
     try {
-      const user : User = await authService.login(formData);
+      const user: User = await authService.login(formData);
       dispatch(setUser(user));
-      setIsSubmitting(false);      
+      setIsSubmitting(false);
       setAlert({
         variant: "success",
         title: "Login Successful",
-        message: `Welcome back, ${user.FirstName}!`,
+        message: `Welcome back, ${user.first_name}!`,
       });
-      if (user.Role === "admin") {
+      if (user.role === "ADMIN") {
         setTimeout(() => {
           navigate("/admin/dashboard");
 
@@ -95,7 +95,7 @@ export function Login() {
       setAlert({
         variant: "error",
         title: "Login Failed",
-        message: error.response?.data ||"An error occurred during login. Please try again.",
+        message: error.response?.data || "An error occurred during login. Please try again.",
       });
       return;
     }
@@ -106,7 +106,7 @@ export function Login() {
       <div className="absolute top-4 left-4">
         <Link to="/" className="text-primary hover:underline">
           &larr; Back to Home
-        </Link> 
+        </Link>
       </div>
       <div className="max-w-md w-full">
         <div className="bg-white rounded-lg shadow-lg p-8">
