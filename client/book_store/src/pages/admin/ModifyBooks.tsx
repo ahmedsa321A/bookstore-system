@@ -29,7 +29,7 @@ export function ModifyBooks() {
   const [deleteIsbn, setDeleteIsbn] = useState<string | null>(null);
 
   // Fetch books from backend
-  const { data: books = [], isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['books', debouncedSearchQuery, selectedCategory],
     queryFn: () => bookService.searchBooks({
       // If query is ISBN-like, search by ISBN, else Title
@@ -38,6 +38,8 @@ export function ModifyBooks() {
       category: selectedCategory !== 'All' ? selectedCategory : undefined,
     }),
   });
+
+  const books = data?.books || [];
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => bookService.updateBook(data.isbn, data),

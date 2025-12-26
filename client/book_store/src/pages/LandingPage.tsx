@@ -18,12 +18,12 @@ export function LandingPage() {
   const state = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
 
-  const { data: books = [], isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['featuredBooks'],
     queryFn: () => bookService.searchBooks(),
   });
 
-  const featuredBooks = books.slice(0, 6);
+  const featuredBooks = (data?.books || []).slice(0, 6);
 
   useEffect(() => {
     if (state.isAuthenticated) {

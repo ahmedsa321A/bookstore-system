@@ -9,7 +9,7 @@ import bookService from '../../api/bookService';
 import Loading from '../../components/Loading';
 import { useDebounce } from '../../hooks/useDebounce';
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 6;
 
 export function SearchBooks() {
   const dispatch = useAppDispatch();
@@ -32,34 +32,31 @@ export function SearchBooks() {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Fetch books from backend
-  const { data: books = [], isLoading, error } = useQuery({
-    queryKey: ['books', debouncedSearchQuery, selectedCategory, selectedPublisher, selectedAuthor],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['books', debouncedSearchQuery, selectedCategory, selectedPublisher, selectedAuthor, currentPage],
     queryFn: () => {
       // If query contains letters, treat as title. If it's only numbers/dashes, treat as ISBN.
       const isIsbn = /^[0-9-]+$/.test(debouncedSearchQuery);
 
       return bookService.searchBooks({
         title: !isIsbn ? debouncedSearchQuery : undefined,
-        isbn: isIsbn ? debouncedSearchQuery : undefined,  
+        isbn: isIsbn ? debouncedSearchQuery : undefined,
         category: selectedCategory !== 'All' ? selectedCategory : undefined,
         publisher: selectedPublisher !== 'All' ? selectedPublisher : undefined,
         author: selectedAuthor !== 'All' ? selectedAuthor : undefined,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE
       });
     },
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new page
   });
 
+  const books = data?.books || [];
+  const totalPages = data?.totalPages || 1;
+  const totalResults = data?.total || 0;
 
   const authors = ['All', ...Array.from(new Set(books.flatMap((b) => b.authors || [])))];
 
-  /** ---------------- PAGINATION ---------------- */
-  // Since backend doesn't paginate, we do it here
-  const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE);
-
-  const paginatedBooks = books.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-  console.log(paginatedBooks);
   if (isLoading) return <Loading size="large" color="#4A90E2" />;
   if (error) return <div className="text-center py-16 text-red-500">Error loading books. Please try again.</div>;
 
@@ -80,7 +77,10 @@ export function SearchBooks() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // Reset to page 1 on search
+            }}
             placeholder="Search by title or ISBN..."
             className="w-full pl-12 pr-4 py-3 bg-white rounded-lg border border-border focus:border-primary focus:outline-none"
           />
@@ -99,7 +99,10 @@ export function SearchBooks() {
             label: cat,
             value: cat,
           }))}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={(e) => {
+            setSelectedCategory(e.target.value);
+            setCurrentPage(1);
+          }}
         />
         <FormSelect
           label="Author"
@@ -111,7 +114,10 @@ export function SearchBooks() {
             label: author,
             value: author,
           }))}
-          onChange={(e) => setSelectedAuthor(e.target.value)}
+          onChange={(e) => {
+            setSelectedAuthor(e.target.value);
+            setCurrentPage(1);
+          }}
         />
 
         <FormSelect
@@ -127,21 +133,24 @@ export function SearchBooks() {
               value: pub.name,
             })),
           ]}
-          onChange={(e) => setSelectedPublisher(e.target.value)}
+          onChange={(e) => {
+            setSelectedPublisher(e.target.value);
+            setCurrentPage(1);
+          }}
         />
       </div>
 
 
       {/* Results Count */}
       <p className="mb-4 text-muted-foreground">
-        {books.length} result{books.length !== 1 && 's'}
+        {totalResults} result{totalResults !== 1 && 's'}
       </p>
 
       {/* Books */}
-      {paginatedBooks.length > 0 ? (
+      {books.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {paginatedBooks.map((book) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {books.map((book) => (
               <BookCard
                 key={book.isbn}
                 book={book}

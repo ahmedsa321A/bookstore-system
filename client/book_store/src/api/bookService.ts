@@ -29,22 +29,56 @@ const transformBook = (data: any): Book => {
     };
 };
 
+export interface PaginatedBooks {
+    books: Book[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
 const bookService = {
     // GET /api/books/search
-    searchBooks: async (filters: BookSearchFilters = {}): Promise<Book[]> => {
+    searchBooks: async (filters: BookSearchFilters & { page?: number; limit?: number } = {}): Promise<PaginatedBooks> => {
         const params = new URLSearchParams();
         if (filters.isbn) params.append('isbn', filters.isbn);
         if (filters.title) params.append('title', filters.title);
         if (filters.category && filters.category !== 'All Categories') params.append('category', filters.category);
         if (filters.author) params.append('author', filters.author);
         if (filters.publisher) params.append('publisher', filters.publisher);
+        if (filters.page) params.append('page', filters.page.toString());
+        if (filters.limit) params.append('limit', filters.limit.toString());
 
         try {
-            const response = await api.get<any[]>(`/books/search?${params.toString()}`);
-            return response.data.map(transformBook);
+            const response = await api.get<{ books: any[]; total: number; page: number; limit: number; totalPages: number }>(`/books/search?${params.toString()}`);
+
+            // Handle new backend response format including metadata
+            if (response.data && Array.isArray(response.data.books)) {
+                return {
+                    books: response.data.books.map(transformBook),
+                    total: response.data.total,
+                    page: response.data.page,
+                    limit: response.data.limit,
+                    totalPages: response.data.totalPages
+                };
+            }
+
+            // Fallback for legacy response (if any)
+            if (Array.isArray(response.data)) {
+                return {
+                    books: (response.data as any[]).map(transformBook),
+                    total: (response.data as any[]).length,
+                    page: 1,
+                    limit: (response.data as any[]).length,
+                    totalPages: 1
+                };
+            }
+
+            return { books: [], total: 0, page: 1, limit: 10, totalPages: 1 };
+
         } catch (error: any) {
             if (error.response && error.response.status === 404) {
-                return [];
+                return { books: [], total: 0, page: 1, limit: 10, totalPages: 1 };
             }
             throw error;
         }
@@ -81,7 +115,7 @@ const bookService = {
         return response.data as { publisher_id: number, name: string }[];
     },
 
-    
+
 };
 
 export default bookService;

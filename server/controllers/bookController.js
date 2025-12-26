@@ -4,17 +4,21 @@ const util = require("util");
 const query = util.promisify(db.query).bind(db);
 exports.searchBooks = async (req, res) => {
   try {
-    const { isbn, title, category, author, publisher, page, limit } = req.query;
-
-    page = parseInt(page) || 0;
-    limit = parseInt(limit) || 10;
-    const offset = page * limit;
+    const { isbn, title, category, author, publisher } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
     let queryStr = `
         SELECT Books.*, 
                Publishers.Name AS publisher_name, 
                GROUP_CONCAT(Authors.Name SEPARATOR ', ') AS authors 
         FROM Books 
+    `;
+
+    let countQueryStr = `
+        SELECT COUNT(DISTINCT Books.ISBN) as total
+        FROM Books
     `;
 
     let joins = [
@@ -47,27 +51,38 @@ exports.searchBooks = async (req, res) => {
       values.push(`%${publisher}%`);
     }
 
-    queryStr += joins.join(" ") + " ";
+    const joinStr = joins.join(" ") + " ";
+
+    queryStr += joinStr;
+    countQueryStr += joinStr; // Join is needed for filtering by author/publisher
 
     if (conditions.length > 0) {
-      queryStr += "WHERE " + conditions.join(" AND ");
+      const conditionStr = "WHERE " + conditions.join(" AND ");
+      queryStr += conditionStr;
+      countQueryStr += conditionStr;
     }
 
     queryStr += " GROUP BY Books.ISBN";
-    queryStr += " LIMIT ? OFFSET ? ";
+    queryStr += " LIMIT ? OFFSET ?";
 
-    const result = await query(queryStr, values);
+    // Values for the main query include pagination
+    const queryValues = [...values, limit, offset];
 
-    if (result.length === 0 && (isbn || title || category)) {
-      return res.status(404).json("No books found.");
-    }
+    // Execute queries
+    const [books] = await db.promise().query(queryStr, queryValues);
+    const [countResult] = await db.promise().query(countQueryStr, values);
+
+    const total = countResult[0]?.total || 0;
 
     return res.status(200).json({
+      books,
+      total,
       page,
       limit,
-      total: result,
+      totalPages: Math.ceil(total / limit)
     });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({ error: err.message });
   }
 };

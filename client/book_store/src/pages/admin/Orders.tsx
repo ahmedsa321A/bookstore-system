@@ -24,9 +24,9 @@ export function Orders() {
     queryKey: ['orders', 'low-stock'],
     queryFn: () => bookService.searchBooks(),
     enabled: activeTab === 'auto',
-    select: (data: Book[]) => data
-      .filter(book => book.stockQuantity < book.thresholdQuantity)
-      .map((book) => ({
+    select: (data: any) => (data.books || [])
+      .filter((book: Book) => book.stockQuantity < book.thresholdQuantity)
+      .map((book: Book) => ({
         ...book,
         publisher: book.publisher || 'Unknown'
       }))

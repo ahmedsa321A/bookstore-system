@@ -26,30 +26,31 @@ export function BookCard({ book, onAddToCart, showDetails = true }: BookCardProp
           </div>
         )}
       </div>
-      <div className="p-4">
-        <span className="inline-block px-2 py-1 bg-secondary text-secondary-foreground rounded text-sm mb-2">
+      <div className="p-3">
+        <span className="inline-block px-2 py-0.5 bg-secondary text-secondary-foreground rounded text-xs mb-2">
           {book.category}
         </span>
-        <h3 className="mb-1 line-clamp-2">{book.title}</h3>
-        <p className="text-muted-foreground mb-2">{book.authors?.join(', ') || 'Unknown Author'}</p>
-        <p className="text-sm text-muted-foreground mb-3">{book.publisher_name || 'Unknown Publisher'}</p>
-        <div className="flex items-center justify-between mt-4">
-          <span className="text-primary">${book.price.toFixed(2)}</span>
+        <h3 className="mb-1 line-clamp-2 text-sm font-semibold">{book.title}</h3>
+        <p className="text-xs text-muted-foreground mb-1">{book.authors?.join(', ') || 'Unknown Author'}</p>
+        <p className="text-xs text-muted-foreground mb-2">{book.publisher_name || 'Unknown Publisher'}</p>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-primary font-medium text-sm">${book.price.toFixed(2)}</span>
           <div className="flex gap-2">
             {showDetails && (
               <Link
                 to={`/book/${book.isbn}`}
-                className="flex items-center gap-1 px-3 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors"
+                className="flex items-center gap-1 px-2 py-1.5 border border-primary text-primary rounded-md hover:bg-primary/5 transition-colors"
+                title="View Details"
               >
-                <Eye className="h-4 w-4" />
+                <Eye className="h-3.5 w-3.5" />
               </Link>
             )}
             {onAddToCart && inStock && (
               <button
                 onClick={() => onAddToCart(book)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-xs"
               >
-                <ShoppingCart className="h-4 w-4" />
+                <ShoppingCart className="h-3.5 w-3.5" />
                 Add
               </button>
             )}

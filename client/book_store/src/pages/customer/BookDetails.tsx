@@ -18,13 +18,13 @@ export function BookDetails() {
     message: string;
   } | null>(null);
 
-  const { data: books = [], isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['book', isbn],
     queryFn: () => bookService.searchBooks({ isbn }),
     enabled: !!isbn,
   });
 
-  const bookData = books[0];
+  const bookData = data?.books?.[0];
 
   if (isLoading) return <Loading size="large" color="#4A90E2" />;
 
@@ -76,11 +76,11 @@ export function BookDetails() {
           </div>
 
           {/* Book Details */}
-          <div>
-            <span className="inline-block px-3 py-1 bg-secondary text-secondary-foreground rounded-lg mb-4">
+          <div className="flex flex-col justify-between">
+            <span className="inline-block px-3 py-1 bg-secondary text-secondary-foreground rounded-lg mb-4 w-20">
               {book.category}
             </span>
-            <h1 className="mb-4">{book.title}</h1>
+            <h1 className="mb-4 text-3xl font-bold">{book.title}</h1>
 
             <div className="space-y-4 mb-6">
               <div>
@@ -126,11 +126,6 @@ export function BookDetails() {
                   </>
                 )}
               </div>
-            </div>
-
-            <div className="border-t border-border pt-6 mb-6">
-              <h3 className="mb-3">Description</h3>
-              <p className="text-muted-foreground">{book.description}</p>
             </div>
 
             {inStock && (
