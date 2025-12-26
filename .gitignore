@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+server/node_modules/
+client/node_modules/
+
+# Environment Variables (SECRETS - Never commit these!)
+
+
+# System Files
