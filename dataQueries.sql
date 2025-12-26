@@ -12,16 +12,18 @@ BEGIN
     DECLARE rand_auth INT;
     DECLARE new_isbn VARCHAR(13);
 
-    -- 1. Disable Foreign Keys to allow clearing old data
+    -- 1. Disable Foreign Keys and Triggers for massive speedup
     SET FOREIGN_KEY_CHECKS = 0;
     
-    -- 2. Clear existing data (fresh start)
+    -- 2. Clear existing data
     TRUNCATE TABLE bookauthors;
     TRUNCATE TABLE books;
     TRUNCATE TABLE authors;
     TRUNCATE TABLE publishers;
+    TRUNCATE TABLE users;
+    TRUNCATE TABLE customers;
     
-    -- 3. Insert 10 Publishers
+    -- 3. Insert Publishers
     INSERT INTO publishers (name, address, phone) VALUES 
     ('Penguin Random House', 'New York, USA', '212-782-9000'),
     ('HarperCollins', 'New York, USA', '212-207-7000'),
@@ -34,7 +36,7 @@ BEGIN
     ('Houghton Mifflin', 'Boston, USA', '617-351-5000'),
     ('Cengage', 'Boston, USA', '617-289-7700');
 
-    -- 4. Insert 20 Authors
+    -- 4. Insert Authors
     INSERT INTO authors (name) VALUES 
     ('Stephen King'), ('J.K. Rowling'), ('George R.R. Martin'), ('Dan Brown'),
     ('Agatha Christie'), ('J.R.R. Tolkien'), ('Isaac Asimov'), ('Arthur C. Clarke'),
@@ -45,31 +47,31 @@ BEGIN
     -- 5. Loop to Generate 500 Books
     SET i = 1;
     WHILE i <= 500 DO
-        -- Generate a Fake ISBN (starting at 9780000000001)
         SET new_isbn = CONCAT('978', LPAD(i, 10, '0'));
-        
-        -- Pick a random category from your Enum list
         SET rand_cat = ELT(FLOOR(1 + RAND() * 5), 'Science', 'Art', 'Religion', 'History', 'Geography');
-        
-        -- Pick a random Publisher (1-10)
         SET rand_pub = FLOOR(1 + RAND() * 10);
         
-        -- Insert the Book
-        INSERT INTO books (isbn, title, publication_year, price, stock, threshold, publisher_id, category)
+        INSERT INTO books (isbn, title, publication_year, price, stock, threshold, publisher_id, category, image)
         VALUES (
             new_isbn, 
-            CONCAT(rand_cat, ' Book Volume ', i),    -- Example: "Science Book Volume 1"
-            FLOOR(1950 + (RAND() * 75)),             -- Random Year
-            ROUND(10 + (RAND() * 90), 2),            -- Random Price
-            FLOOR(RAND() * 100),                     -- Random Stock
-            10,                                      -- Threshold
+            CONCAT(rand_cat, ' Masterclass Vol. ', i),
+            FLOOR(1980 + (RAND() * 45)),
+            ROUND(15 + (RAND() * 85), 2),
+            FLOOR(20 + (RAND() * 80)), -- Start with stock above threshold (20-100)
+            15,                        -- Reorder threshold set to 15
             rand_pub,
-            rand_cat
+            rand_cat,
+            'book_cover.jpg'
         );
 
-        -- Link this book to a Random Author (1-20)
+        -- Assign 1-2 authors per book
         SET rand_auth = FLOOR(1 + RAND() * 20);
         INSERT INTO bookauthors (isbn, author_id) VALUES (new_isbn, rand_auth);
+        
+        -- Occasionally add a second author
+        IF i % 5 = 0 THEN
+            INSERT INTO bookauthors (isbn, author_id) VALUES (new_isbn, IF(rand_auth = 20, 1, rand_auth + 1));
+        END IF;
 
         SET i = i + 1;
     END WHILE;
@@ -81,7 +83,5 @@ END$$
 
 DELIMITER ;
 
--- ==========================================
--- EXECUTE THE GENERATOR
--- ==========================================
+-- Execute
 CALL LoadBookstoreData();
