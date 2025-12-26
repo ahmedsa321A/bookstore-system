@@ -61,7 +61,7 @@ BEGIN
             15,                        -- Reorder threshold set to 15
             rand_pub,
             rand_cat,
-            'book_cover.jpg'
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzk_qFP3ltZzT5FB8lRzgtMPRhN6ZAiMnU2Q&s'
         );
 
         -- Assign 1-2 authors per book
