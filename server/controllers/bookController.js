@@ -63,7 +63,9 @@ exports.searchBooks = async (req, res) => {
     }
 
     queryStr += " GROUP BY Books.ISBN";
-    queryStr += " LIMIT ? OFFSET ?";
+
+    queryStr += " LIMIT ? OFFSET ? ";
+    values.push(limit, offset);
 
     // Values for the main query include pagination
     const queryValues = [...values, limit, offset];

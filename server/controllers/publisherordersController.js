@@ -2,33 +2,79 @@ const db = require('../config/db');
 const util = require('util');
 
 const query = util.promisify(db.query).bind(db);
-
 exports.placePublisherOrder = async (req, res) => {
     try {
-        const { isbn, quantity } = req.body;
+        const { isbn } = req.body;
+        const CONSTANT_QTY = 50;
 
-        // Get book to find publisher
-        const book = await query("SELECT publisher_id, Title FROM Books WHERE ISBN = ?", [isbn]);
-        if (book.length === 0) return res.status(404).json("Book not found.");
-        const publisherId = book[0].publisher_id;
+        // 1. Get Book Details
+        const bookCheck = await query("SELECT publisher_id, Title, Stock, Threshold FROM Books WHERE ISBN = ?", [isbn]);
+
+        if (bookCheck.length === 0) {
+            return res.status(404).json("Book not found.");
+        }
+
+        const book = bookCheck[0];
+
+        // 2. Logic Check A: Is Stock < Threshold?
+        if (book.Stock >= book.Threshold) {
+            return res.status(400).json({
+                error: "Operation Cancelled: Stock is sufficient.",
+                details: `Current Stock (${book.Stock}) is not below the Threshold (${book.Threshold}).`
+            });
+        }
+
+        // =========================================================
+        // 3. LOGIC CHECK B: Is there already a PENDING order for this book?
+        // =========================================================
+        // We join order_items with orders to check if this ISBN exists in any 'Pending' order
+        const duplicateCheck = await query(`
+            SELECT po.publisher_order_id 
+            FROM publisher_orders po
+            JOIN publisher_order_items poi ON po.publisher_order_id = poi.publisher_order_id
+            WHERE poi.isbn = ? AND po.status = 'Pending'
+        `, [isbn]);
+
+        if (duplicateCheck.length > 0) {
+            return res.status(409).json({
+                error: "Duplicate Order Detected.",
+                details: `A pending order (ID: ${duplicateCheck[0].publisher_order_id}) already exists for this book. Please confirm or cancel it first.`
+            });
+        }
 
         await query("START TRANSACTION");
 
-        // Create Order
-        const orderResult = await query("INSERT INTO publisher_orders (publisher_id, order_date, status) VALUES (?, NOW(), 'Pending')", [publisherId]);
-        const orderId = orderResult.insertId;
+        try {
+            // 4. Create Order Header
+            const orderResult = await query(
+                "INSERT INTO publisher_orders (publisher_id, order_date, status) VALUES (?, NOW(), 'Pending')",
+                [book.publisher_id]
+            );
 
-        // Create Order Item
-        await query("INSERT INTO publisher_order_items (publisher_order_id, isbn, quantity, price) VALUES (?, ?, ?, 0)", [orderId, isbn, quantity]);
+            const orderId = orderResult.insertId;
 
-        await query("COMMIT");
-        return res.status(201).json("Order placed successfully.");
+            // 5. Create Order Item
+            await query(
+                "INSERT INTO publisher_order_items (publisher_order_id, isbn, quantity) VALUES (?, ?, ?)",
+                [orderId, isbn, CONSTANT_QTY]
+            );
+
+            await query("COMMIT");
+            return res.status(201).json({
+                message: "Order placed successfully.",
+                orderId: orderId,
+                quantityOrdered: CONSTANT_QTY
+            });
+
+        } catch (innerErr) {
+            await query("ROLLBACK");
+            throw innerErr;
+        }
+
     } catch (err) {
-        await query("ROLLBACK");
         return res.status(500).json({ error: err.message });
     }
 };
-
 exports.getPublisherOrders = async (req, res) => {
     try {
         const sql = `

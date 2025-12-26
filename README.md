@@ -191,6 +191,18 @@
 *   **Auth**: Admin Token
 *   **Response**: `200 OK` - "Order cancelled successfully."
 
+### Place Publisher Order
+*   **URL**: `PUT /api/books/publisher/order`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - "Order cancelled successfully."
+*   **body**
+```
+JSON
+{
+  "isbn": "9780132350881"
+}
+```
+
 ---
 
 ## 6. System Reports (Admin Only)
