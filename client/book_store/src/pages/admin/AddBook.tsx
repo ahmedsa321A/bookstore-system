@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { BookPlus } from 'lucide-react';
-import { publishers, type AddBookErrors } from '../../types/book';
+import { type AddBookErrors } from '../../types/book';
 import FormInput from '../../components/FormInput';
 import AlertCard from '../../components/AlertCard';
 import { validateAddBook, uploadImageToImgbb } from '../../utils/helper';
 import FormSelect from '../../components/FormSelect';
-import { useMutation } from '@tanstack/react-query';
+import AddPublisherModal from '../../components/AddPublisherModal';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import bookService from '../../api/bookService';
 
 
@@ -18,6 +19,7 @@ export function AddBook() {
     title?: string;
     message: string;
   } | null>(null);
+  const [isPublisherModalOpen, setIsPublisherModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     isbn: '',
@@ -42,6 +44,12 @@ export function AddBook() {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
+
+  const { data: publishersList = [] } = useQuery({
+    queryKey: ['publishers'],
+    queryFn: bookService.getPublishers,
+    select: (data) => data.map(p => ({ label: p.name, value: p.publisher_id.toString() }))
+  });
 
   const addMutation = useMutation({
     mutationFn: (data: any) => bookService.addBook(data),
@@ -106,29 +114,14 @@ export function AddBook() {
       return;
     }
 
-    // Transform data for backend
-    // Backend expects: isbn, title, publication_year, price, stock, threshold, publisher_id, category, image, author (name array)
-    // We need to map publisher name to ID or handle it. 
-    // TEMPORARY FIX: We will send publisher_id = 1 (random) if we don't have mapping, 
-    // OR we ideally should have fetched publishers with IDs.
-    // Since I haven't implemented getPublishers yet, I will postpone this part or assume the user will implement getPublishers.
-    // Actually, I should probably implement getPublishers now.
-
-    // For now, let's just send the payload and if it fails, we see.
-    // But wait, the form has a select for publisher NAME.
-    // Only way this works is if backend accepts name OR we map it.
-
     const payload = {
-      isbn: formData.isbn.replace(/-/g, ''), // Normalize ISBN by removing dashes
+      isbn: formData.isbn.replace(/-/g, ''),
       title: formData.title,
       publication_year: formData.publicationYear,
       price: parseFloat(formData.price),
       stock: parseInt(formData.stockQuantity),
       threshold: parseInt(formData.thresholdQuantity),
-      // publisher_id: ??? We only have name "Penguin...". 
-      // I'll bet the database has these publishers with IDs.
-      // I will default to 1 for now to make it work, but this is technical debt.
-      publisher: formData.publisher,
+      publisher_id: parseInt(formData.publisher),
       category: formData.category,
       author: formData.authors,
       image: formData.image,
@@ -171,6 +164,9 @@ export function AddBook() {
     try {
       const imageUrl = await uploadImageToImgbb(file);
       setFormData(prev => ({ ...prev, image: imageUrl }));
+      if (errors.image) {
+        setErrors(prev => ({ ...prev, image: undefined }));
+      }
       setAlert({
         variant: 'success',
         title: 'Upload Success',
@@ -190,7 +186,7 @@ export function AddBook() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8">
+      < div className="mb-8" >
         <div className="flex items-center gap-2 mb-2">
           <BookPlus className="h-6 w-6 text-primary" />
           <h1>Add New Book</h1>
@@ -198,7 +194,7 @@ export function AddBook() {
         <p className="text-muted-foreground">
           Enter the details to add a new book
         </p>
-      </div>
+      </div >
 
       <div className="max-w-3xl">
         {alert && (
@@ -302,11 +298,19 @@ export function AddBook() {
               value={formData.publisher}
               onChange={handleChange}
               error={errors.publisher}
-              options={publishers.map((publisher) => ({
-                label: publisher,
-                value: publisher,
-              }))}
+              options={publishersList}
             />
+
+            <div className="flex items-center mt-2 md:col-span-2 md:mt-0 md:-ml-2 text-sm">
+              <button
+                type="button"
+                onClick={() => setIsPublisherModalOpen(true)}
+                className="text-primary hover:underline flex items-center gap-1"
+              >
+                <BookPlus className="h-4 w-4" />
+                Add New Publisher
+              </button>
+            </div>
 
             <FormInput
               label="Publication Year"
@@ -389,6 +393,15 @@ export function AddBook() {
           </div>
         </form>
       </div>
-    </div>
+
+      <AddPublisherModal
+        isOpen={isPublisherModalOpen}
+        onClose={() => setIsPublisherModalOpen(false)}
+        onSuccess={() => {
+          setAlert({ variant: 'success', title: 'Success', message: 'Publisher added successfully!' });
+          // Ideally we could also select the new publisher, but that requires more state passing or logic.
+        }}
+      />
+    </div >
   );
 }

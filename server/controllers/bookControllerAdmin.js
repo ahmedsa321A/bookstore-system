@@ -43,8 +43,18 @@ exports.addBook = async (req, res) => {
                 }
             }
 
-            if (!publisher_id) {
-                throw new Error("Publisher ID is required.");
+            // 2. Handle Publisher
+            let finalPublisherId = publisher_id;
+            if (!finalPublisherId && req.body.publisher) {
+                // Check publisher existence (lowercase keys based on schema check)
+                const existingPublisher = await query("SELECT publisher_id FROM Publishers WHERE Name = ?", [req.body.publisher]);
+                if (existingPublisher.length > 0) {
+                    finalPublisherId = existingPublisher[0].publisher_id;
+                } else {
+                    const result = await query("INSERT INTO Publishers (Name, Address, Phone) VALUES (?, ?, ?)", [req.body.publisher, 'Unknown', 'Unknown']);
+                    finalPublisherId = result.insertId;
+                }
+
             }
 
             // 3. Handle Image
@@ -61,7 +71,7 @@ exports.addBook = async (req, res) => {
                 price,
                 stock,
                 threshold,
-                publisher_id,
+                finalPublisherId,
                 category,
                 finalImage,
             ];

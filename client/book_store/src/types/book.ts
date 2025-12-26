@@ -35,16 +35,7 @@ export interface ModifyBookErrors {
 }
 
 
-export const publishers = [
-  'Penguin Random House',
-  'HarperCollins',
-  'Simon & Schuster',
-  'Macmillan Publishers',
-  'Hachette Book Group',
-  'Oxford University Press',
-  'Cambridge University Press',
-  'National Geographic',
-];
+
 
 export interface Order {
   id: string;

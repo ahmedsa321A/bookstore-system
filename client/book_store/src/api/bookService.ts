@@ -71,6 +71,12 @@ const bookService = {
     addPublisher: async (data: { name: string; address?: string; phone?: string }): Promise<void> => {
         await api.post('/books/addPublisher', data);
     },
+
+    // GET /api/books/publishers
+    getPublishers: async (): Promise<{ publisher_id: number, name: string }[]> => {
+        const response = await api.get('/books/publishers');
+        return response.data as { publisher_id: number, name: string }[];
+    },
 };
 
 export default bookService;

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
-import { publishers } from '../../types/book';
 import { BookCard } from '../../components/BookCard';
 import { useAppDispatch } from '../../store/hooks';
 import { addToCart } from '../../store/slices/cartSlice';
@@ -21,6 +20,12 @@ export function SearchBooks() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const categories = ['All', 'Science', 'Art', 'Religion', 'History', 'Geography'];
+
+  // Fetch publishers
+  const { data: publishersList = [] } = useQuery({
+    queryKey: ['publishers'],
+    queryFn: bookService.getPublishers,
+  });
 
   // Fetch books from backend
   const { data: books = [], isLoading, error } = useQuery({
@@ -114,9 +119,9 @@ export function SearchBooks() {
           value={selectedPublisher}
           options={[
             { label: "All Publishers", value: "All" },
-            ...publishers.map((pub) => ({
-              label: pub,
-              value: pub,
+            ...publishersList.map((pub) => ({
+              label: pub.name,
+              value: pub.name,
             })),
           ]}
           onChange={(e) => setSelectedPublisher(e.target.value)}
