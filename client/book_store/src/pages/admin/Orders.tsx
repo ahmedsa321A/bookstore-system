@@ -7,6 +7,8 @@ import { type Book } from '../../types/book';
 import Loading from '../../components/Loading';
 import AlertCard from '../../components/AlertCard';
 
+import { ConfirmModal } from '../../components/ConfirmModal';
+
 export function Orders() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'auto' | 'confirm'>('auto');
@@ -15,6 +17,16 @@ export function Orders() {
     title?: string;
     message: string;
   } | null>(null);
+
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'place' | 'confirm' | 'cancel' | null;
+    data: any;
+  }>({
+    isOpen: false,
+    type: null,
+    data: null,
+  });
 
   // --- Queries ---
 
@@ -49,9 +61,14 @@ export function Orders() {
       queryClient.invalidateQueries({ queryKey: ['orders', 'low-stock'] });
       queryClient.invalidateQueries({ queryKey: ['orders', 'publisher'] });
       setAlert({ variant: 'success', message: 'Restock order placed successfully.' });
+      setModalConfig({ isOpen: false, type: null, data: null });
     },
     onError: (err: any) => {
-      setAlert({ variant: 'error', title: 'Order Failed', message: err.response?.data || 'Failed to place order.' });
+      const data = err.response?.data;
+      const title = data?.error || 'Order Failed';
+      const message = data?.details || (typeof data === 'string' ? data : 'Failed to place order.');
+      setAlert({ variant: 'error', title, message });
+      setModalConfig({ isOpen: false, type: null, data: null });
     }
   });
 
@@ -60,9 +77,14 @@ export function Orders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders', 'publisher'] });
       setAlert({ variant: 'success', message: 'Order confirmed and stock updated.' });
+      setModalConfig({ isOpen: false, type: null, data: null });
     },
     onError: (err: any) => {
-      setAlert({ variant: 'error', title: 'Confirmation Failed', message: err.response?.data || 'Failed to confirm order.' });
+      const data = err.response?.data;
+      const title = data?.error || 'Confirmation Failed';
+      const message = data?.details || (typeof data === 'string' ? data : 'Failed to confirm order.');
+      setAlert({ variant: 'error', title, message });
+      setModalConfig({ isOpen: false, type: null, data: null });
     }
   });
 
@@ -71,9 +93,14 @@ export function Orders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders', 'publisher'] });
       setAlert({ variant: 'success', message: 'Order cancelled successfully.' });
+      setModalConfig({ isOpen: false, type: null, data: null });
     },
     onError: (err: any) => {
-      setAlert({ variant: 'error', title: 'Cancellation Failed', message: err.response?.data || 'Failed to cancel order.' });
+      const data = err.response?.data;
+      const title = data?.error || 'Cancellation Failed';
+      const message = data?.details || (typeof data === 'string' ? data : 'Failed to cancel order.');
+      setAlert({ variant: 'error', title, message });
+      setModalConfig({ isOpen: false, type: null, data: null });
     }
   });
 
@@ -82,21 +109,38 @@ export function Orders() {
 
 
   const handleAutoOrder = (book: any) => {
-    const qtyToOrder = Math.max((book.thresholdQuantity * 2) - book.stockQuantity, 10); // Minimum 10
-    if (confirm(`Place order for ${qtyToOrder} copies of "${book.Title || book.title}"?`)) {
-      placeOrderMutation.mutate({ isbn: book.ISBN || book.isbn, quantity: qtyToOrder });
-    }
+    setModalConfig({
+      isOpen: true,
+      type: 'place',
+      data: book,
+    });
   };
 
   const handleConfirmOrder = (orderId: string | number) => {
-    if (confirm("Confirm receipt of this order? Stock will be updated.")) {
-      confirmOrderMutation.mutate(orderId);
-    }
+    setModalConfig({
+      isOpen: true,
+      type: 'confirm',
+      data: orderId,
+    });
   };
 
   const handleCancelOrder = (orderId: string | number) => {
-    if (confirm("Are you sure you want to cancel this order?")) {
-      cancelOrderMutation.mutate(orderId);
+    setModalConfig({
+      isOpen: true,
+      type: 'cancel',
+      data: orderId,
+    });
+  };
+
+  const handleModalConfirm = () => {
+    if (modalConfig.type === 'place') {
+      const book = modalConfig.data;
+      const qtyToOrder = Math.max((book.thresholdQuantity * 2) - book.stockQuantity, 10);
+      placeOrderMutation.mutate({ isbn: book.ISBN || book.isbn, quantity: qtyToOrder });
+    } else if (modalConfig.type === 'confirm') {
+      confirmOrderMutation.mutate(modalConfig.data);
+    } else if (modalConfig.type === 'cancel') {
+      cancelOrderMutation.mutate(modalConfig.data);
     }
   };
 
@@ -289,6 +333,30 @@ export function Orders() {
             </div>
           )}
         </div>
+      )}
+      {modalConfig.isOpen && (
+        <ConfirmModal
+          title={
+            modalConfig.type === 'place' ? 'Place Restock Order' :
+              modalConfig.type === 'confirm' ? 'Confirm Order Receipt' :
+                'Cancel Order'
+          }
+          description={
+            modalConfig.type === 'place'
+              ? `Are you sure you want to place an order for 50 copies of "${modalConfig.data.Title || modalConfig.data.title}"?`
+              : modalConfig.type === 'confirm'
+                ? "This will update your stock quantity. Ensure you have physically received the shipment."
+                : "This functionality is intended for correcting mistakes. Publishers are not notified automatically."
+          }
+          confirmLabel={
+            modalConfig.type === 'place' ? 'Place Order' :
+              modalConfig.type === 'confirm' ? 'Confirm and Update Stock' :
+                'Delete Order'
+          }
+          variant={modalConfig.type === 'cancel' ? 'destructive' : 'primary'}
+          onConfirm={handleModalConfirm}
+          onCancel={() => setModalConfig({ isOpen: false, type: null, data: null })}
+        />
       )}
     </div>
   );
