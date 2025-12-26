@@ -92,7 +92,6 @@ exports.addBook = async (req, res) => {
         }
 
     } catch (err) {
-        // Handle foreign key error nicely
         if (err.code === 'ER_NO_REFERENCED_ROW_2') {
             return res.status(400).json({ error: "Invalid Publisher ID. This publisher does not exist." });
         }
@@ -108,12 +107,8 @@ exports.modifyBook = async (req, res) => {
         ]);
         if (results.length === 0) return res.status(404).json("Book not found!");
 
-        // Normalized keys from DB are lowercase
         let currentBook = results[0];
         const updates = req.body;
-
-        // Use correct casing for keys (lowercase from DB query)
-        // Values to update:
         const newTitle = updates.title || currentBook.title;
         const newYear = updates.publication_year || currentBook.publication_year;
         const newPrice = updates.price !== undefined ? updates.price : currentBook.price;
@@ -153,11 +148,31 @@ exports.deleteBook = async (req, res) => {
     try {
         const isbn = req.params.isbn;
 
-        const result = await query("DELETE FROM Books WHERE ISBN = ?", [isbn]);
+        await query("START TRANSACTION");
 
-        if (result.affectedRows === 0)
-            return res.status(404).json("Book not found or already deleted.");
-        return res.status(200).json("Book deleted successfully!");
+        try {
+            // 1. Delete relations in BookAuthors
+            await query("DELETE FROM bookauthors WHERE isbn = ?", [isbn]);
+
+            // 2. Delete the Book
+            const result = await query("DELETE FROM Books WHERE ISBN = ?", [isbn]);
+
+            if (result.affectedRows === 0) {
+                await query("ROLLBACK");
+                return res.status(404).json("Book not found or already deleted.");
+            }
+
+            await query("COMMIT");
+            return res.status(200).json("Book deleted successfully!");
+
+        } catch (innerErr) {
+            await query("ROLLBACK");
+            if (innerErr.code === 'ER_ROW_IS_REFERENCED_2') {
+                return res.status(400).json("Cannot delete book because it has associated orders or other dependencies.");
+            }
+            throw innerErr;
+        }
+
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -213,3 +228,5 @@ exports.getAllPublishers = async (req, res) => {
 
 
 };
+
+

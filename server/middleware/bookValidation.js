@@ -3,7 +3,6 @@ const getValidationErrors = (data = {}, isUpdate = false) => {
     const errors = [];
 
     if (!isUpdate) {
-        // Changed to allow publisher OR publisher_id
         if (!isbn || !title || !publication_year || price === undefined || stock === undefined || threshold === undefined || (!publisher_id && !data.publisher) || !category) {
             return ["All fields are required."];
         }
@@ -12,12 +11,9 @@ const getValidationErrors = (data = {}, isUpdate = false) => {
         }
     }
 
-    // Relaxed ISBN check to allow for dashes or different formats if needed, or stick to 13. 
-    // For now, let's allow it if it's "valid" format roughly.
-    // actually, let's just warn if it's way off.
+
 
     if (price !== undefined && price < 0) errors.push("Price cannot be negative.");
-    // Removed Stock < Threshold check to match controller changes
 
 
     if (category && !["Science", "Art", "Religion", "History", "Geography"].includes(category)) {
