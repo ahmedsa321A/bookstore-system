@@ -1,10 +1,14 @@
-const db = require('../config/db');
-const util = require('util');
+const db = require("../config/db");
+const util = require("util");
 
 const query = util.promisify(db.query).bind(db);
 exports.searchBooks = async (req, res) => {
   try {
-    const { isbn, title, category, author, publisher } = req.query;
+    const { isbn, title, category, author, publisher, page, limit } = req.query;
+
+    page = parseInt(page) || 0;
+    limit = parseInt(limit) || 10;
+    const offset = page * limit;
 
     let queryStr = `
         SELECT Books.*, 
@@ -13,11 +17,10 @@ exports.searchBooks = async (req, res) => {
         FROM Books 
     `;
 
-
     let joins = [
       "LEFT JOIN Publishers ON Books.publisher_id = Publishers.publisher_id",
       "LEFT JOIN BookAuthors ON Books.ISBN = BookAuthors.ISBN",
-      "LEFT JOIN Authors ON BookAuthors.author_id = Authors.author_id"
+      "LEFT JOIN Authors ON BookAuthors.author_id = Authors.author_id",
     ];
 
     let conditions = [];
@@ -51,6 +54,7 @@ exports.searchBooks = async (req, res) => {
     }
 
     queryStr += " GROUP BY Books.ISBN";
+    queryStr += " LIMIT ? OFFSET ? ";
 
     const result = await query(queryStr, values);
 
@@ -58,8 +62,11 @@ exports.searchBooks = async (req, res) => {
       return res.status(404).json("No books found.");
     }
 
-    return res.status(200).json(result);
-
+    return res.status(200).json({
+      page,
+      limit,
+      total: result,
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
