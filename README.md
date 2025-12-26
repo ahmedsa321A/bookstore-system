@@ -120,6 +120,30 @@
 *   **Auth**: Admin Token
 *   **Response**: `200 OK` - "Book deleted successfully!"
 
+### Add Author (Admin Only)
+*   **URL**: `POST /api/books/addAuthor`
+*   **Auth**: Admin Token
+*   **Body**:
+    ```json
+    {
+      "name": "J.K. Rowling"
+    }
+    ```
+*   **Response**: `201 Created` - "Author added successfully!"
+
+### Add Publisher (Admin Only)
+*   **URL**: `POST /api/books/addPublisher`
+*   **Auth**: Admin Token
+*   **Body**:
+    ```json
+    {
+      "name": "Penguin Random House",
+      "address": "123 Publisher Lane",
+      "phone": "555-0199"
+    }
+    ```
+*   **Response**: `201 Created` - "Publisher added successfully!"
+
 ---
 
 ## 4. Orders (`/api/orders`)

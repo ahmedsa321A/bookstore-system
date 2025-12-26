@@ -136,4 +136,44 @@ exports.deleteBook = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
+
+};
+exports.addAuthor = async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name) return res.status(400).json("Author name is required.");
+
+        // Check if author already exists
+        const existing = await query("SELECT * FROM Authors WHERE Name = ?", [name]);
+        if (existing.length > 0) {
+            return res.status(409).json("Author already exists.");
+        }
+
+        await query("INSERT INTO Authors (Name) VALUES (?)", [name]);
+        return res.status(201).json("Author added successfully!");
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+exports.addPublisher = async (req, res) => {
+    try {
+        const { name, address, phone } = req.body;
+        if (!name) return res.status(400).json("Publisher name is required.");
+
+        // Check if publisher already exists
+        const existing = await query("SELECT * FROM Publishers WHERE Name = ?", [name]);
+        if (existing.length > 0) {
+            return res.status(409).json("Publisher already exists.");
+        }
+
+        const insertQuery = "INSERT INTO Publishers (Name, Address, Phone) VALUES (?)";
+        const values = [name, address, phone];
+
+        await query(insertQuery, [values]);
+        return res.status(201).json("Publisher added successfully!");
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+
 };

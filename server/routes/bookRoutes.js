@@ -13,5 +13,7 @@ router.get('/search', bookController.searchBooks);
 router.post('/add', verifyToken, verifyAdmin, validateAddBook, bookControllerAdmin.addBook);
 router.put('/update/:isbn', verifyToken, verifyAdmin, validateModifyBook, bookControllerAdmin.modifyBook);
 router.delete('/delete/:isbn', verifyToken, verifyAdmin, bookControllerAdmin.deleteBook);
+router.post('/addAuthor', verifyToken, verifyAdmin, bookControllerAdmin.addAuthor);
+router.post('/addPublisher', verifyToken, verifyAdmin, bookControllerAdmin.addPublisher);
 
 module.exports = router;
