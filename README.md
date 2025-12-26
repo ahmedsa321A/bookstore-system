@@ -1,237 +1,127 @@
+# Online Bookstore System
 
-# Bookstore System API Documentation
+> A comprehensive full-stack e-commerce platform for browsing, purchasing, and managing books, featuring a modern React frontend, a robust Node.js backend, and a Python-based recommendation engine.
 
-**Base URL**: `http://localhost:8800`
+![Project Status](https://img.shields.io/badge/status-active-success.svg)
+![License](https://img.shields.io/badge/license-ISC-blue.svg)
 
-## Important Notes for Frontend
-1.  **Credentials**: All requests requiring authentication MUST include `{ withCredentials: true }` (axios) or `credentials: 'include'` (fetch) to send the HTTP-Only cookie.
-2.  **Tokens**: The JWT is stored in an HTTP-Only cookie named `access_token`. You cannot access it via JavaScript.
+## 📖 Project Overview
 
----
+The **Online Bookstore System** is designed to simulate a real-world e-commerce environment. It facilitates seamless interaction between **Customers** (who browse and buy books) and **Administrators** (who manage inventory and orders). The system ensures data integrity with MySQL transactions, provides real-time stock management with automated triggers, and offers personalized book recommendations.
 
-## 1. Authentication (`/api/auth`)
+## ✨ Features
 
-### Signup
-*   **URL**: `POST /api/auth/signup`
-*   **Body**:
-    ```json
-    {
-      "username": "john_doe",
-      "email": "john@example.com",
-      "password": "password123",
-      "first_name": "John",
-      "last_name": "Doe",
-      "phone": "1234567890",
-      "address": "123 Main St"
-    }
-    ```
-*   **Response**: `200 OK` - "User registered successfully!"
+### 🛍️ Customer Module
+*   **Book Catalog**: Browse a wide range of books with advanced filtering (Category, Author, Price).
+*   **Search**: Real-time search by title, author, or ISBN.
+*   **Shopping Cart**: Manage items locally before checkout.
+*   **Secure Checkout**: Atomic transactions ensure stock is reserved and orders are processed securely.
+*   **Order History**: View past purchases and status.
 
-### Login
-*   **URL**: `POST /api/auth/login`
-*   **Body**:
-    ```json
-    {
-      "username": "john_doe",
-      "password": "password123"
-    }
-    ```
-*   **Response**: `200 OK` - Returns user profile object (excluding password). Sets `access_token` cookie.
+### 🛡️ Admin Module
+*   **Inventory Management**: Add, update, or remove books and authors.
+*   **Smart Procurement**:
+    *   **Auto-Stock Triggers**: Automatically generates publisher orders when stock falls below a threshold.
+    *   **Negative Stock Protection**: Database triggers prevent invalid stock updates.
+*   **Publisher Management**: Manage publisher relationships and orders.
+*   **Analytics Dashboard**: View sales data, top customers, and best-selling books.
 
-### Logout
-*   **URL**: `POST /api/auth/logout`
-*   **Body**: `{}`
-*   **Response**: `200 OK` - Clears cookie.
+### 🤖 Machine Learning Service
+*   **Content-Based Recommendations**: Suggests books based on similarity (TF-IDF analysis of Title, Category, and Authors).
+*   **Python/Flask API**: A dedicated microservice handling recommendation logic.
+
+## 🛠️ Tech Stack
+
+*   **Frontend**: React.js (Vite), TailwindCSS, Redux Toolkit
+*   **Backend**: Node.js, Express.js
+*   **Database**: MySQL (Relational Schema, Triggers, ACID Transactions)
+*   **ML Service**: Python, Flask, Scikit-learn, Pandas
 
 ---
 
-## 2. Users (`/api/users`)
+## 🚀 Installation & Setup
 
-### Get Current User
-*   **URL**: `GET /api/users/me`
-*   **Auth**: User Token
-*   **Response**: `200 OK` - User profile object.
+Follow these steps to get the project running on your local machine.
 
-### Get User Profile
-*   **URL**: `GET /api/users/:id`
-*   **Auth**: User Token (Own profile only)
-*   **Response**: `200 OK` - User profile object.
+### Prerequisites
+*   **Node.js** (v18+)
+*   **Python** (v3.8+)
+*   **MySQL Server**
 
-### Update User Profile
-*   **URL**: `PUT /api/users/:id`
-*   **Auth**: User Token (Own profile only)
-*   **Body** (Send only fields to update):
-    ```json
-    {
-      "username": "new_name",
-      "email": "new@email.com",
-      "password": "newpassword"
-    }
+### 1. Database Setup
+1.  Open your MySQL client (Workbench, CLI, etc.).
+2.  Create a database named `bookstore`.
+3.  Import the schema and data:
+    ```sql
+    source database/BookstoreDB.sql
     ```
-*   **Response**: `200 OK` - "Profile updated successfully!"
+    *This script creates the tables, triggers (`prevent_negative_stock`, `auto_reorder_books`), and seeds initial data.*
+
+### 2. Backend Server
+1.  Navigate to the server directory:
+    ```bash
+    cd server
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Create a `.env` file in the `server` root with your database credentials:
+    ```env
+    DB_HOST=localhost
+    DB_USER=root
+    DB_PASS=your_password
+    DB_NAME=bookstore
+    PORT=8800
+    JWT_SECRET=your_secret_key
+    ```
+4.  Start the server:
+    ```bash
+    npm start
+    ```
+    *Server runs on `http://localhost:8800`*
+
+### 3. Frontend Client
+1.  Navigate to the client directory:
+    ```bash
+    cd client/book_store
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the development server:
+    ```bash
+    npm run dev
+    ```
+    *Client runs on `http://localhost:5173`*
+
+### 4. Recommendation Service (Optional)
+1.  Navigate to the ML service directory:
+    ```bash
+    cd server/ml_service
+    ```
+2.  Install Python requirements:
+    ```bash
+    pip install -r requirements.txt
+    ```
+3.  Start the Flask app:
+    ```bash
+    python app.py
+    ```
+    *Service runs on `http://localhost:5000`*
+
+## 📚 API Documentation
+
+For detailed API endpoints, request/response formats, and authentication details, please refer to the [API Reference](API_REFERENCE.md).
+
+## 👥 Team Members
+
+*   **Hazem Barakat** - Frontend Lead
+*   **Ahmed Saied** - Backend Engineer
+*   **Adham Zakaria** - Backend Engineer (Admin & Reports)
+*   **Begad Mohamed** - Database Architect
 
 ---
 
-## 3. Books (`/api/books`)
-
-### Search / List Books (Public)
-*   **URL**: `GET /api/books` or `GET /api/books/search`
-*   **Query Params** (Optional): `?isbn=...&title=...&category=...&author=...&publisher=...`
-*   **Response**: `200 OK` - Array of book objects.
-
-### Add Book (Admin Only)
-*   **URL**: `POST /api/books/add`
-*   **Auth**: Admin Token
-*   **Body**:
-    ```json
-    {
-      "isbn": "9781234567897",
-      "title": "New Book",
-      "publication_year": 2024,
-      "price": 29.99,
-      "stock": 100,
-      "threshold": 10,
-      "threshold": 10,
-      "publisher_id": 1,
-      "category": "Science",
-      "author": ["Author One", "Author Two"],
-      "image": "https://example.com/image.jpg"
-    }
-    ```
-*   **Response**: `201 Created` - "Book added successfully!"
-
-### Update Book (Admin Only)
-*   **URL**: `PUT /api/books/update/:isbn`
-*   **Auth**: Admin Token
-*   **Body**:
-    ```json
-    {
-      "price": 35.50,
-      "price": 35.50,
-      "stock": 50,
-      "image": "https://example.com/new-image.jpg"
-    }
-    ```
-*   **Response**: `200 OK` - "Book modified successfully!"
-
-### Delete Book (Admin Only)
-*   **URL**: `DELETE /api/books/delete/:isbn`
-*   **Auth**: Admin Token
-*   **Response**: `200 OK` - "Book deleted successfully!"
-
-### Add Author (Admin Only)
-*   **URL**: `POST /api/books/addAuthor`
-*   **Auth**: Admin Token
-*   **Body**:
-    ```json
-    {
-      "name": "J.K. Rowling"
-    }
-    ```
-*   **Response**: `201 Created` - "Author added successfully!"
-
-### Add Publisher (Admin Only)
-*   **URL**: `POST /api/books/addPublisher`
-*   **Auth**: Admin Token
-*   **Body**:
-    ```json
-    {
-      "name": "Penguin Random House",
-      "address": "123 Publisher Lane",
-      "phone": "555-0199"
-    }
-    ```
-*   **Response**: `201 Created` - "Publisher added successfully!"
-
----
-
-## 4. Orders (`/api/orders`)
-
-### Checkout
-*   **URL**: `POST /api/orders/checkout`
-*   **Auth**: User Token
-*   **Body**:
-    ```json
-    {
-      "cardNumber": "1234567812345678",
-      "cartItems": [
-        { "isbn": "9781234567897", "quantity": 1 },
-        { "isbn": "9780000000001", "quantity": 2 }
-      ]
-    }
-    ```
-*   **Response**: `200 OK` - "Order placed successfully! Transaction Complete."
-
-### Get Order History
-*   **URL**: `GET /api/orders/getCustomerOrderHistory`
-*   **Auth**: User Token
-*   **Response**: `200 OK` - Array of past orders with details.
-
----
-
-## 5. Publisher Management (Admin Only)
-
-### Get All Publishers
-*   **URL**: `GET /api/books/publishers`
-*   **Auth**: Admin Token
-*   **Response**: `200 OK` - JSON array of all publishers.
-
-### Get Publisher Orders
-*   **URL**: `GET /api/books/publisher/orders`
-*   **Auth**: Admin Token
-*   **Response**: `200 OK` - JSON array of all publisher orders with items.
-
-### Confirm Publisher Order
-*   **URL**: `PUT /api/books/publisher/order/confirm/:orderId`
-*   **Auth**: Admin Token
-*   **Response**: `200 OK` - "Order confirmed and stock updated."
-
-### Cancel Publisher Order
-*   **URL**: `PUT /api/books/publisher/order/cancel/:orderId`
-*   **Auth**: Admin Token
-*   **Response**: `200 OK` - "Order cancelled successfully."
-
-### Place Publisher Order
-*   **URL**: `PUT /api/books/publisher/order`
-*   **Auth**: Admin Token
-*   **Response**: `200 OK` - "Order cancelled successfully."
-*   **body**
-```
-JSON
-{
-  "isbn": "9780132350881"
-}
-```
-
----
-
-## 6. System Reports (Admin Only)
-
-### Get Sales Last Month
-*   **URL**: `GET /api/admin/sales/last-month`
-*   **Auth**: Admin Token
-*   **Response**: `200 OK` - Object containing period and total sales.
-
-### Get Sales by Date
-*   **URL**: `GET /api/admin/sales/date`
-*   **Auth**: Admin Token
-*   **Query Param**: `?date=YYYY-MM-DD`
-*   **Response**: `200 OK` - Object containing date and total sales.
-
-### Get Top 5 Customers
-*   **URL**: `GET /api/admin/top-customers`
-*   **Auth**: Admin Token
-*   **Description**: Top 5 customers by spending in the last 3 months.
-*   **Response**: `200 OK` - JSON array of customers with total spent.
-
-### Get Top 10 Selling Books
-*   **URL**: `GET /api/admin/top-books`
-*   **Auth**: Admin Token
-*   **Description**: Top 10 books by quantity sold in the last 3 months.
-*   **Response**: `200 OK` - JSON array of books with total copies sold.
-
-### Get Replenishment Stats
-*   **URL**: `GET /api/admin/replenishment/:isbn`
-*   **Auth**: Admin Token
-*   **Response**: `200 OK` - Object showing times ordered and total quantity received from publishers.
-
+*Verified for Database Systems Course (Fall 2025) - Alexandria University*
