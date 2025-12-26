@@ -16,7 +16,7 @@ router.put('/update/:isbn', verifyToken, verifyAdmin, validateModifyBook, bookCo
 router.delete('/delete/:isbn', verifyToken, verifyAdmin, bookControllerAdmin.deleteBook);
 router.post('/addAuthor', verifyToken, verifyAdmin, bookControllerAdmin.addAuthor);
 router.post('/addPublisher', verifyToken, verifyAdmin, bookControllerAdmin.addPublisher);
-router.get('/publishers', verifyToken, verifyAdmin, bookControllerAdmin.getAllPublishers);
+router.get('/publishers', verifyToken, bookControllerAdmin.getAllPublishers);
 
 router.get('/publisher/orders', verifyToken, verifyAdmin, getPublisherOrders);
 

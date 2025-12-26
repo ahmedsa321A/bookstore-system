@@ -73,9 +73,7 @@ exports.updateUser = (req, res) => {
         const currentUser = data[0];
         let finalPassword = currentUser.password; // Note: lowercase 'password' from database
 
-        // 🔐 Password logic
         if (current_password && current_password.trim() !== "") {
-            // Verify current password
             const isMatch = bcrypt.compareSync(current_password, currentUser.password);
 
             if (!isMatch) {
@@ -90,18 +88,14 @@ exports.updateUser = (req, res) => {
             finalPassword = bcrypt.hashSync(new_password, salt);
         }
 
-        // 📧 Email uniqueness check (if email is changing)
         const emailToCheck = email || currentUser.email;
-        // Check if this email is used by ANOTHER user (in customers table usually, but could check users table if email was there - here email is in customers)
         const emailCheckQuery = "SELECT user_id FROM customers WHERE email = ? AND user_id != ?";
 
         db.query(emailCheckQuery, [emailToCheck, id], (err, emailData) => {
             if (err) return res.status(500).json(err);
             if (emailData.length > 0) return res.status(400).json("Email already in use!");
 
-            // ✅ Proceed with updates (Sequential)
 
-            // A. Update Password in 'users' table
             const userUpdateQuery = "UPDATE users SET password = ? WHERE user_id = ?";
             db.query(userUpdateQuery, [finalPassword, id], (err) => {
                 if (err) {
