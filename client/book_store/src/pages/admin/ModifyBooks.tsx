@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { Search, Edit, Trash2, Save, X } from 'lucide-react';
-import { books as initialBooks, type Book } from '../../types/book';
+import { type Book } from '../../types/book';
 import { validateModifyBook } from "../../utils/helper";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import AlertCard from '../../components/AlertCard';
 import FormInput from '../../components/FormInput';
 import FormSelect from '../../components/FormSelect';
-
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import bookService from '../../api/bookService';
+import Loading from '../../components/Loading';
 
 export function ModifyBooks() {
-  const [books, setBooks] = useState(initialBooks);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [editingIsbn, setEditingIsbn] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>(null);
@@ -21,12 +23,60 @@ export function ModifyBooks() {
   } | null>(null);
   const [deleteIsbn, setDeleteIsbn] = useState<string | null>(null);
 
-  const filteredBooks = books.filter(
-    (book) =>
-      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.isbn.includes(searchQuery) ||
-      book.authors.some((author) => author.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Fetch books from backend
+  const { data: books = [], isLoading } = useQuery({
+    queryKey: ['books', searchQuery],
+    queryFn: () => bookService.searchBooks({
+      // If query is ISBN-like, search by ISBN, else Title
+      isbn: /^[0-9-]+$/.test(searchQuery) && searchQuery.length > 5 ? searchQuery : undefined,
+      title: !(/^[0-9-]+$/.test(searchQuery)) ? searchQuery : undefined
+    }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => bookService.updateBook(data.isbn, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      setEditingIsbn(null);
+      setEditData(null);
+      setErrors({});
+      setAlert({
+        variant: "success",
+        title: "Updated",
+        message: "Book updated successfully.",
+      });
+    },
+    onError: (err) => {
+      setAlert({
+        variant: "error",
+        title: "Update Failed",
+        message: "Failed to update book. Please try again.",
+      });
+      console.error(err);
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (isbn: string) => bookService.deleteBook(isbn),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      setDeleteIsbn(null);
+      setAlert({
+        variant: "success",
+        title: "Deleted",
+        message: "Book deleted successfully.",
+      });
+    },
+    onError: (err) => {
+      setAlert({
+        variant: "error",
+        title: "Delete Failed",
+        message: "Failed to delete book.",
+      });
+      console.error(err);
+    }
+  });
+
 
   const handleEdit = (book: Book) => {
     setEditingIsbn(book.isbn);
@@ -46,28 +96,34 @@ export function ModifyBooks() {
       return;
     }
 
-    setBooks(
-      books.map((book) =>
-        book.isbn === editingIsbn
-          ? {
-            ...editData,
-            authors: editData.authors
-              .split(",")
-              .map((a: string) => a.trim()),
-          }
-          : book
-      )
-    );
+    // Prepare payload for backend
+    // Backend expects: title, publication_year, price, stock, threshold, publisher_id, category, image
+    // Note: We need publisher_id, but editData might only have publisher name from the Book object? 
+    // The current Book object has 'publisher' string. 'publisher_id' is not in the clean Book type. 
+    // This is a limitation of the current normalization. 
+    // For now, let's assume we can only update fields available.
+    // If publisher_id is needed, we would need to fetch it or store it in the normalized Book type.
+    // Let's add publisher_id to Book type? Or just send what we have.
+    // Wait, the backend requires publisher_id? 
+    // 'if (updates.publisher_id) currentBook.publisher_id = updates.publisher_id;' - it's optional in update.
 
-    setEditingIsbn(null);
-    setEditData(null);
-    setErrors({});
-    console.log("Book after edit:", editData);
-    setAlert({
-      variant: "success",
-      title: "Updated",
-      message: "Book updated successfully.",
-    });
+    const payload = {
+      isbn: editingIsbn,
+      title: editData.title,
+      price: editData.price,
+      stock: editData.stockQuantity,
+      threshold: editData.thresholdQuantity,
+      category: editData.category,
+      image: editData.image,
+      publication_year: editData.publicationYear,
+      // authors? Backend doesn't seem to support updating authors via modifyBook endpoint easily (it only updates Books table)
+      // Check modifyBook controller... it updates Books table. Authors are in BookAuthors table. 
+      // The modifyBook logic in controller DOES NOT update authors.
+      // So editing authors here won't persist in backend with current controller logic.
+      // I will comment this out or just warn the user.
+    };
+
+    updateMutation.mutate(payload);
   };
 
 
@@ -77,16 +133,12 @@ export function ModifyBooks() {
   };
 
   const confirmDelete = () => {
-    setBooks(books.filter((book) => book.isbn !== deleteIsbn));
-    console.log("Deleted book with ISBN:", deleteIsbn);
-    setDeleteIsbn(null);
-    setAlert({
-      variant: "success",
-      title: "Updated",
-      message: "Book deleted successfully.",
-    });
+    if (deleteIsbn) {
+      deleteMutation.mutate(deleteIsbn);
+    }
   };
 
+  if (isLoading) return <Loading size="large" />;
 
   return (
     <div>
@@ -103,7 +155,7 @@ export function ModifyBooks() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by ISBN, title, or author..."
+            placeholder="Search by ISBN or title..."
             className="w-full pl-12 pr-4 py-3 bg-white rounded-lg border border-border focus:border-primary focus:outline-none transition-colors shadow-sm"
           />
         </div>
@@ -125,7 +177,7 @@ export function ModifyBooks() {
               <tr>
                 <th className="px-6 py-3 text-left">ISBN</th>
                 <th className="px-6 py-3 text-left">Title</th>
-                <th className="px-6 py-3 text-left">Author(s)</th>
+                {/* <th className="px-6 py-3 text-left">Author(s)</th> */}
                 <th className="px-6 py-3 text-left">Category</th>
                 <th className="px-6 py-3 text-left">Stock</th>
                 <th className="px-6 py-3 text-left">Price</th>
@@ -133,7 +185,7 @@ export function ModifyBooks() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredBooks.map((book) => (
+              {books.map((book) => (
                 <tr key={book.isbn} className="hover:bg-secondary/30">
                   {editingIsbn === book.isbn ? (
                     <>
@@ -144,6 +196,7 @@ export function ModifyBooks() {
                           value={editData.isbn}
                           error={errors.isbn}
                           compact
+                          disabled 
                           onChange={(e) =>
                             setEditData({ ...editData, isbn: e.target.value })
                           }
@@ -161,7 +214,8 @@ export function ModifyBooks() {
                           }
                         />
                       </td>
-                      <td className="px-6 py-4">
+                      {/* Removing Author edit for now as backend doesn't support it in modifyBook */}
+                      {/* <td className="px-6 py-4">
                         <FormInput
                           id="authors"
                           name="authors"
@@ -173,7 +227,7 @@ export function ModifyBooks() {
                             setEditData({ ...editData, authors: e.target.value })
                           }
                         />
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4">
                         <FormSelect
                           label=""
@@ -249,7 +303,7 @@ export function ModifyBooks() {
                     <>
                       <td className="px-6 py-4 font-mono text-sm">{book.isbn}</td>
                       <td className="px-6 py-4">{book.title}</td>
-                      <td className="px-6 py-4">{book.authors.join(', ')}</td>
+                      {/* <td className="px-6 py-4">{book.authors.join(', ')}</td> */}
                       <td className="px-6 py-4">
                         <span className="inline-block px-2 py-1 bg-secondary rounded text-sm">
                           {book.category}
@@ -301,7 +355,7 @@ export function ModifyBooks() {
         />
       )}
 
-      {filteredBooks.length === 0 && (
+      {books.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No books found matching your search.</p>
         </div>

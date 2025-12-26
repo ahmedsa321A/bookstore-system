@@ -1,20 +1,30 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ShoppingCart, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
-import { books } from '../../types/book';
 import { useAppDispatch } from '../../store/hooks';
 import { addToCart } from '../../store/slices/cartSlice';
-
+import bookService from '../../api/bookService';
+import Loading from '../../components/Loading';
 
 export function BookDetails() {
   const { isbn } = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const book = books.find((b) => b.isbn === isbn);
 
-  if (!book) {
+  const { data: books = [], isLoading, error } = useQuery({
+    queryKey: ['book', isbn],
+    queryFn: () => bookService.searchBooks({ isbn }),
+    enabled: !!isbn,
+  });
+
+  const bookData = books[0];
+
+  if (isLoading) return <Loading size="large" color="#4A90E2" />;
+
+  if (error || !bookData) {
     return (
       <div className="text-center py-16">
-        <h2 className="mb-4">Book Not Found</h2>
+        <h2 className="mb-4">{error ? "Error loading book" : "Book Not Found"}</h2>
         <button
           onClick={() => navigate('/customer/search')}
           className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90"
@@ -24,6 +34,10 @@ export function BookDetails() {
       </div>
     );
   }
+
+  // Normalize data (backend vs frontend types)
+  // Data is already normalized by the service
+  const book = bookData;
 
   const inStock = book.stockQuantity > 0;
 

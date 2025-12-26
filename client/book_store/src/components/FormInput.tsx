@@ -13,13 +13,14 @@ interface FormInputProps {
     rows?: number;
     error?: string;
     showPassword?: boolean;
+    disabled?: boolean;
     onTogglePassword?: () => void;
     onChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => void;
 }
 
-const FormInput: React.FC<FormInputProps> = ({
+const   FormInput: React.FC<FormInputProps> = ({
     label,
     id,
     name,
@@ -30,6 +31,7 @@ const FormInput: React.FC<FormInputProps> = ({
     compact,
     error,
     showPassword,
+    disabled = false,
     onTogglePassword,
     onChange,
 }) => {
@@ -42,6 +44,8 @@ const FormInput: React.FC<FormInputProps> = ({
     const borderClasses = error
         ? "border-red-500 focus:border-red-500"
         : "border-transparent focus:border-primary";
+
+    const disabledClasses = disabled ? "opacity-50 cursor-not-allowed bg-gray-100" : "";
 
     return (
         <div className="space-y-1">
@@ -59,8 +63,9 @@ const FormInput: React.FC<FormInputProps> = ({
                         value={value}
                         onChange={onChange}
                         rows={rows}
+                        disabled={disabled}
                         placeholder={placeholder}
-                        className={`${baseClasses} ${borderClasses}`}
+                        className={`${baseClasses} ${borderClasses} ${disabledClasses}`}
                     />
                 ) : (
                     <input
@@ -69,6 +74,7 @@ const FormInput: React.FC<FormInputProps> = ({
                         type={isPassword && showPassword ? "text" : type}
                         value={value}
                         onChange={onChange}
+                        disabled={disabled}
                         placeholder={placeholder}
                         className={`${baseClasses} ${borderClasses} ${isPassword ? "pr-10" : ""
                             }`}

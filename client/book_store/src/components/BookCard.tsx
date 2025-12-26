@@ -32,8 +32,8 @@ export function BookCard({ book, onAddToCart, showDetails = true }: BookCardProp
           {book.category}
         </span>
         <h3 className="mb-1 line-clamp-2">{book.title}</h3>
-        <p className="text-muted-foreground mb-2">{book.authors.join(', ')}</p>
-        <p className="text-sm text-muted-foreground mb-3">{book.publisher}</p>
+        <p className="text-muted-foreground mb-2">{book.authors?.join(', ') || 'Unknown Author'}</p>
+        <p className="text-sm text-muted-foreground mb-3">{book.publisher || 'Unknown Publisher'}</p>
         <div className="flex items-center justify-between mt-4">
           <span className="text-primary">${book.price.toFixed(2)}</span>
           <div className="flex gap-2">

@@ -1,8 +1,10 @@
 import { BookOpen, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { books } from '../types/book';
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAppSelector } from '../store/hooks';
+import bookService from '../api/bookService';
+import Loading from '../components/Loading';
 
 const categories = [
   { name: 'Science', icon: '🔬', color: 'bg-blue-100' },
@@ -13,9 +15,16 @@ const categories = [
 ];
 
 export function LandingPage() {
-  const featuredBooks = books.filter((book) => book.featured).slice(0, 6);
   const state = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
+
+  const { data: books = [], isLoading } = useQuery({
+    queryKey: ['featuredBooks'],
+    queryFn: () => bookService.searchBooks(),
+  });
+
+  const featuredBooks = books.slice(0, 6);
+
   useEffect(() => {
     if (state.isAuthenticated) {
       const role = state.user?.role;
@@ -99,30 +108,34 @@ export function LandingPage() {
               Handpicked selections from our collection
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-            {featuredBooks.map((book) => (
-              <div
-                key={book.isbn}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <div className="aspect-3/4 overflow-hidden bg-secondary/20">
-                  <img
-                    src={book.image}
-                    alt={book.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  />
+          {isLoading ? (
+            <Loading size="large" color="#4A90E2" />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+              {featuredBooks.map((book) => (
+                <div
+                  key={book.isbn}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  <div className="aspect-3/4 overflow-hidden bg-secondary/20">
+                    <img
+                      src={book.image}
+                      alt={book.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <span className="inline-block px-2 py-1 bg-secondary text-secondary-foreground rounded text-sm mb-2">
+                      {book.category}
+                    </span>
+                    <h4 className="mb-1 line-clamp-2">{book.title}</h4>
+                    <p className="text-sm text-muted-foreground mb-2">{book.authors?.[0] || 'Unknown Author'}</p>
+                    <p className="text-primary">${book.price.toFixed(2)}</p>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <span className="inline-block px-2 py-1 bg-secondary text-secondary-foreground rounded text-sm mb-2">
-                    {book.category}
-                  </span>
-                  <h4 className="mb-1 line-clamp-2">{book.title}</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{book.authors[0]}</p>
-                  <p className="text-primary">${book.price.toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           <div className="text-center mt-12">
             <Link
               to="/login"
