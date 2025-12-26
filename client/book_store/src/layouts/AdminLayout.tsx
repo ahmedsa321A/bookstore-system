@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
   BookPlus,
   Edit,
   FileText,
@@ -12,13 +11,18 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { LogoutModal } from '../components/LogoutModal';
+import authService from '../api/authService';
+import { logout } from '../store/slices/authSlice';
+import { clearCart } from '../store/slices/cartSlice';
+import { useDispatch } from 'react-redux';
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
+  
   const menuItems = [
     { path: '/admin/add-book', label: 'Add New Book', icon: BookPlus },
     { path: '/admin/modify-books', label: 'Modify Books', icon: Edit },
@@ -28,7 +32,12 @@ export function AdminLayout() {
 
   const handleLogout = () => {
     setLogoutModalOpen(false);
-    navigate('/');
+    authService.logout();
+    dispatch(logout());
+    dispatch(clearCart());
+    setTimeout(() => {
+      navigate('/');
+    }, 1);
   };
 
   return (
@@ -108,3 +117,4 @@ export function AdminLayout() {
     </div>
   );
 }
+
