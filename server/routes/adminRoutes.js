@@ -1,15 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('../controllers/adminController');
+const reportsController = require('../controllers/reportsController');
+const verifyToken = require('../middleware/verifyToken');
+const verifyAdmin = require('../middleware/verifyAdmin');
 
-// verifytoken middleware can be added here for admin routes
+router.get('/sales/last-month', verifyToken, verifyAdmin, reportsController.getSalesLastMonth);
 
-// Check if controller functions exist before routing to prevent crashes
-if (adminController.confirmOrder) {
-    router.post('/confirm-order', adminController.confirmOrder);
-}
-if (adminController.getSalesReport) {
-    router.get('/sales-report', adminController.getSalesReport);
-}
+router.get('/sales/date', verifyToken, verifyAdmin, reportsController.getSalesByDate);
+
+router.get('/top-customers', verifyToken, verifyAdmin, reportsController.getTopCustomers);
+
+router.get('/top-books', verifyToken, verifyAdmin, reportsController.getTopSellingBooks);
+
+router.get('/replenishment/:isbn', verifyToken, verifyAdmin, reportsController.getBookReplenishmentStats);
 
 module.exports = router;
