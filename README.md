@@ -92,7 +92,9 @@
       "stock": 100,
       "threshold": 10,
       "publisher_id": 1,
-      "category": "Science"
+      "publisher_id": 1,
+      "category": "Science",
+      "image": "https://example.com/image.jpg"
     }
     ```
 *   **Response**: `201 Created` - "Book added successfully!"
@@ -104,7 +106,9 @@
     ```json
     {
       "price": 35.50,
-      "stock": 50
+      "price": 35.50,
+      "stock": 50,
+      "image": "https://example.com/new-image.jpg"
     }
     ```
 *   **Response**: `200 OK` - "Book modified successfully!"

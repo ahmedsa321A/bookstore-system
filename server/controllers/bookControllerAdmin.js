@@ -15,6 +15,7 @@ exports.addBook = async (req, res) => {
             threshold,
             publisher_id,
             category,
+            image,
         } = req.body;
 
         const existingBooks = await query("SELECT * FROM Books WHERE ISBN = ?", [
@@ -24,7 +25,7 @@ exports.addBook = async (req, res) => {
             return res.status(409).json("Book with this ISBN already exists!");
 
         const insertQuery =
-            "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category) VALUES (?)";
+            "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category, Image) VALUES (?)";
         const values = [
             isbn,
             title,
@@ -34,6 +35,7 @@ exports.addBook = async (req, res) => {
             threshold,
             publisher_id,
             category,
+            image,
         ];
 
         await query(insertQuery, [values]);
@@ -64,6 +66,7 @@ exports.modifyBook = async (req, res) => {
             currentBook.Threshold = updates.threshold;
         if (updates.publisher_id) currentBook.publisher_id = updates.publisher_id;
         if (updates.category) currentBook.Category = updates.category;
+        if (updates.image) currentBook.Image = updates.image;
 
         if (updates.stock !== undefined) {
             if (updates.stock < 0) {
@@ -78,7 +81,7 @@ exports.modifyBook = async (req, res) => {
 
         const updateQuery = `
       UPDATE Books 
-      SET Title = ?, publication_year = ?, Price = ?, Stock = ?, Threshold = ?, publisher_id = ?, Category = ? 
+      SET Title = ?, publication_year = ?, Price = ?, Stock = ?, Threshold = ?, publisher_id = ?, Category = ?, Image = ? 
       WHERE ISBN = ?`;
 
         const values = [
@@ -89,6 +92,7 @@ exports.modifyBook = async (req, res) => {
             currentBook.Threshold,
             currentBook.publisher_id,
             currentBook.Category,
+            currentBook.Image,
             targetISBN,
         ];
 
