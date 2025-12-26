@@ -107,16 +107,18 @@ exports.getBookReplenishmentStats = async (req, res) => {
             SELECT 
                 b.title,
                 COUNT(poi.publisher_order_id) as times_ordered,
-                SUM(poi.quantity) as total_quantity_received
-            FROM publisher_order_items poi
-            JOIN books b ON poi.isbn = b.isbn
-            WHERE poi.isbn = ?
+                COALESCE(SUM(poi.quantity), 0) as total_quantity_received
+            FROM books b
+            LEFT JOIN publisher_order_items poi ON b.isbn = poi.isbn
+            WHERE b.isbn = ?
             GROUP BY b.isbn
         `;
 
         const result = await query(sql, [isbn]);
 
-        if (result.length === 0) return res.status(200).json({ message: "No replenishment orders found for this book." });
+        if (result.length === 0) {
+            return res.status(404).json("Book not found.");
+        }
 
         return res.status(200).json(result[0]);
     } catch (err) {
