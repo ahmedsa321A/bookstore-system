@@ -87,7 +87,6 @@ exports.updateUser = (req, res) => {
                 return res.status(400).json("Email already in use!");
             }
 
-            // ✅ Proceed with update
             const updateQuery = `
                 UPDATE Users 
                 SET 

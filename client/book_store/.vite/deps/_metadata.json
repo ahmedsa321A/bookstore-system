@@ -1,71 +1,80 @@
 {
-  "hash": "26c755f5",
+  "hash": "7000d4d9",
   "configHash": "37b6bb59",
-  "lockfileHash": "2ab252eb",
-  "browserHash": "ccbe3996",
+  "lockfileHash": "cec26be9",
+  "browserHash": "fda3ec9e",
   "optimized": {
     "react/jsx-dev-runtime": {
       "src": "../../node_modules/react/jsx-dev-runtime.js",
       "file": "react_jsx-dev-runtime.js",
-      "fileHash": "eafdac71",
+      "fileHash": "0cc81a05",
       "needsInterop": true
     },
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "11cdc820",
+      "fileHash": "44b51f25",
       "needsInterop": true
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "6b1a36c0",
+      "fileHash": "0fa53568",
       "needsInterop": true
     },
     "react-redux": {
       "src": "../../node_modules/react-redux/dist/react-redux.mjs",
       "file": "react-redux.js",
-      "fileHash": "724a9bb9",
+      "fileHash": "2cb8d527",
       "needsInterop": false
     },
     "react-router-dom": {
       "src": "../../node_modules/react-router-dom/dist/index.mjs",
       "file": "react-router-dom.js",
-      "fileHash": "52c5344d",
+      "fileHash": "1a24ec7e",
       "needsInterop": false
     },
     "@reduxjs/toolkit": {
       "src": "../../node_modules/@reduxjs/toolkit/dist/redux-toolkit.modern.mjs",
       "file": "@reduxjs_toolkit.js",
-      "fileHash": "c54b229f",
+      "fileHash": "91249b7a",
       "needsInterop": false
     },
     "react-loading-indicators": {
       "src": "../../node_modules/react-loading-indicators/esm/index.js",
       "file": "react-loading-indicators.js",
-      "fileHash": "6ee24551",
+      "fileHash": "b73c38d4",
       "needsInterop": false
     },
     "lucide-react": {
       "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
       "file": "lucide-react.js",
-      "fileHash": "d9157df8",
-      "needsInterop": false
-    },
-    "framer-motion": {
-      "src": "../../node_modules/framer-motion/dist/es/index.mjs",
-      "file": "framer-motion.js",
-      "fileHash": "f2ac0042",
+      "fileHash": "bbeaddef",
       "needsInterop": false
     },
     "axios": {
       "src": "../../node_modules/axios/index.js",
       "file": "axios.js",
-      "fileHash": "b6c4ba33",
+      "fileHash": "93c0156b",
+      "needsInterop": false
+    },
+    "framer-motion": {
+      "src": "../../node_modules/framer-motion/dist/es/index.mjs",
+      "file": "framer-motion.js",
+      "fileHash": "800fa056",
+      "needsInterop": false
+    },
+    "@radix-ui/react-select": {
+      "src": "../../node_modules/@radix-ui/react-select/dist/index.mjs",
+      "file": "@radix-ui_react-select.js",
+      "fileHash": "384a136b",
       "needsInterop": false
     }
   },
   "chunks": {
+    "chunk-L4PS4AXR": {
+      "file": "chunk-L4PS4AXR.js"
+    },
     "chunk-3HME3SJ2": {
       "file": "chunk-3HME3SJ2.js"
     },
