@@ -13,7 +13,7 @@ exports.addBook = async (req, res) => {
             price,
             stock,
             threshold,
-            publisher_id,
+            publisher,
             category,
             image,
             author, // Author name
