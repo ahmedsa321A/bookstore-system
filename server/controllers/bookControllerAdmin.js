@@ -151,10 +151,8 @@ exports.deleteBook = async (req, res) => {
         await query("START TRANSACTION");
 
         try {
-            // 1. Delete relations in BookAuthors
             await query("DELETE FROM bookauthors WHERE isbn = ?", [isbn]);
 
-            // 2. Delete the Book
             const result = await query("DELETE FROM Books WHERE ISBN = ?", [isbn]);
 
             if (result.affectedRows === 0) {

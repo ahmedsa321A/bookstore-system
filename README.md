@@ -191,3 +191,35 @@
 *   **Auth**: Admin Token
 *   **Response**: `200 OK` - "Order cancelled successfully."
 
+---
+
+## 6. System Reports (Admin Only)
+
+### Get Sales Last Month
+*   **URL**: `GET /api/admin/sales/last-month`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - Object containing period and total sales.
+
+### Get Sales by Date
+*   **URL**: `GET /api/admin/sales/date`
+*   **Auth**: Admin Token
+*   **Query Param**: `?date=YYYY-MM-DD`
+*   **Response**: `200 OK` - Object containing date and total sales.
+
+### Get Top 5 Customers
+*   **URL**: `GET /api/admin/top-customers`
+*   **Auth**: Admin Token
+*   **Description**: Top 5 customers by spending in the last 3 months.
+*   **Response**: `200 OK` - JSON array of customers with total spent.
+
+### Get Top 10 Selling Books
+*   **URL**: `GET /api/admin/top-books`
+*   **Auth**: Admin Token
+*   **Description**: Top 10 books by quantity sold in the last 3 months.
+*   **Response**: `200 OK` - JSON array of books with total copies sold.
+
+### Get Replenishment Stats
+*   **URL**: `GET /api/admin/replenishment/:isbn`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - Object showing times ordered and total quantity received from publishers.
+
