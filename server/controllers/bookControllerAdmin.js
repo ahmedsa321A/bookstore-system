@@ -13,10 +13,10 @@ exports.addBook = async (req, res) => {
             price,
             stock,
             threshold,
-            publisher,
+            publisher_id,
             category,
             image,
-            author, // Author name
+            author,
         } = req.body;
 
         const existingBooks = await query("SELECT * FROM Books WHERE ISBN = ?", [
@@ -27,17 +27,13 @@ exports.addBook = async (req, res) => {
 
         await query("START TRANSACTION");
 
-        // 1. Handle Authors
         const authorNames = Array.isArray(author) ? author : [author];
         const authorIds = [];
-
 
         try {
             for (const authorName of authorNames) {
                 if (!authorName) continue;
-                // Check author existence (lowercase keys based on schema check)
                 const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [authorName]);
-
 
                 if (existingAuthor.length > 0) {
                     authorIds.push(existingAuthor[0].author_id);
@@ -47,17 +43,8 @@ exports.addBook = async (req, res) => {
                 }
             }
 
-            // 2. Handle Publisher
-            let publisherId = null;
-            if (publisher) {
-                // Check publisher existence (lowercase keys based on schema check)
-                const existingPublisher = await query("SELECT publisher_id FROM Publishers WHERE Name = ?", [publisher]);
-                if (existingPublisher.length > 0) {
-                    publisherId = existingPublisher[0].publisher_id;
-                } else {
-                    const result = await query("INSERT INTO Publishers (Name, Address, Phone) VALUES (?, ?, ?)", [publisher, 'Unknown', 'Unknown']);
-                    publisherId = result.insertId;
-                }
+            if (!publisher_id) {
+                throw new Error("Publisher ID is required.");
             }
 
             // 3. Handle Image
@@ -66,6 +53,7 @@ exports.addBook = async (req, res) => {
             // 4. Insert Book
             const insertQuery =
                 "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category, Image) VALUES (?)";
+
             const values = [
                 isbn,
                 title,
@@ -73,7 +61,7 @@ exports.addBook = async (req, res) => {
                 price,
                 stock,
                 threshold,
-                publisherId,
+                publisher_id,
                 category,
                 finalImage,
             ];
@@ -93,12 +81,14 @@ exports.addBook = async (req, res) => {
             throw innerErr;
         }
 
-
     } catch (err) {
+        // Handle foreign key error nicely
+        if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+            return res.status(400).json({ error: "Invalid Publisher ID. This publisher does not exist." });
+        }
         return res.status(500).json({ error: err.message });
     }
 };
-
 exports.modifyBook = async (req, res) => {
     try {
         const targetISBN = req.params.isbn;
