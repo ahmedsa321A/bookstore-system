@@ -13,10 +13,10 @@ exports.addBook = async (req, res) => {
             price,
             stock,
             threshold,
-            publisher, // Now accepting name
+            publisher_id,
             category,
             image,
-            author, // Author name array
+            author, // Author name
         } = req.body;
 
         const existingBooks = await query("SELECT * FROM Books WHERE ISBN = ?", [
@@ -30,7 +30,6 @@ exports.addBook = async (req, res) => {
         const authorIds = [];
 
         for (const authorName of authorNames) {
-            if (!authorName) continue;
             const existingAuthor = await query("SELECT author_id FROM authors WHERE name = ?", [authorName]);
 
             if (existingAuthor.length > 0) {
@@ -41,27 +40,7 @@ exports.addBook = async (req, res) => {
             }
         }
 
-        // 2. Handle Publisher
-        let publisherId = null;
-        if (publisher) {
-            const existingPublisher = await query("SELECT publisher_id FROM Publishers WHERE Name = ?", [publisher]);
-            if (existingPublisher.length > 0) {
-                publisherId = existingPublisher[0].publisher_id;
-            } else {
-                // Determine a default address/phone or leave null if allowed, strictly insert Name for now
-                // Schema likely requires fields? 'initPublisherOrders.js' didn't show Publishers schema.
-                // Assuming Name is enough or others nullable. 
-                // 'addPublisher' controller uses Name, Address, Phone. 
-                // Let's insert with defaults if needed.
-                const result = await query("INSERT INTO Publishers (Name, Address, Phone) VALUES (?, ?, ?)", [publisher, 'Unknown', 'Unknown']);
-                publisherId = result.insertId;
-            }
-        }
-
-        // 3. Handle Image
-        const finalImage = image || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&q=80&w=2730&ixlib=rb-4.0.3';
-
-        // 4. Insert Book
+        // 2. Insert Book
         const insertQuery =
             "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category, Image) VALUES (?)";
         const values = [
@@ -71,14 +50,14 @@ exports.addBook = async (req, res) => {
             price,
             stock,
             threshold,
-            publisherId,
+            publisher_id,
             category,
-            finalImage,
+            image,
         ];
 
         await query(insertQuery, [values]);
 
-        // 5. Link Book and Authors
+        // 3. Link Book and Authors
         for (const authId of authorIds) {
             await query("INSERT INTO bookauthors (isbn, author_id) VALUES (?, ?)", [isbn, authId]);
         }
@@ -196,5 +175,16 @@ exports.addPublisher = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
+
+};
+exports.getAllPublishers = async (req, res) => {
+    try {
+        const publishers = await query("SELECT * FROM Publishers");
+        return res.status(200).json(publishers);
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+
+
 
 };
