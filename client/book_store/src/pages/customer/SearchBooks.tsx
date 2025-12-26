@@ -7,6 +7,7 @@ import { addToCart } from '../../store/slices/cartSlice';
 import FormSelect from '../../components/FormSelect';
 import bookService from '../../api/bookService';
 import Loading from '../../components/Loading';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -27,16 +28,19 @@ export function SearchBooks() {
     queryFn: bookService.getPublishers,
   });
 
+  // Debounce search query to avoid too many requests
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
   // Fetch books from backend
   const { data: books = [], isLoading, error } = useQuery({
-    queryKey: ['books', searchQuery, selectedCategory, selectedPublisher, selectedAuthor],
+    queryKey: ['books', debouncedSearchQuery, selectedCategory, selectedPublisher, selectedAuthor],
     queryFn: () => {
-      // Determine if search query is likely an ISBN (basic check)
-      const isIsbn = /^[0-9-]+$/.test(searchQuery) && searchQuery.length > 9;
+      // If query contains letters, treat as title. If it's only numbers/dashes, treat as ISBN.
+      const isIsbn = /^[0-9-]+$/.test(debouncedSearchQuery);
 
       return bookService.searchBooks({
-        title: !isIsbn ? searchQuery : undefined,
-        isbn: isIsbn ? searchQuery : undefined,
+        title: !isIsbn ? debouncedSearchQuery : undefined,
+        isbn: isIsbn ? debouncedSearchQuery : undefined,  
         category: selectedCategory !== 'All' ? selectedCategory : undefined,
         publisher: selectedPublisher !== 'All' ? selectedPublisher : undefined,
         author: selectedAuthor !== 'All' ? selectedAuthor : undefined,
@@ -44,9 +48,7 @@ export function SearchBooks() {
     },
   });
 
-  // Extract unique authors from the FETCHED books for the filter (dynamic based on current search result? 
-  // or maybe better to fetch all? For now, let's derive from current search results to avoid extra calls, 
-  // though this shrinks the list as you filter. But it's a start.)
+
   const authors = ['All', ...Array.from(new Set(books.flatMap((b) => b.authors || [])))];
 
   /** ---------------- PAGINATION ---------------- */
@@ -91,6 +93,7 @@ export function SearchBooks() {
           label="Category"
           id="category"
           name="category"
+          bgColor='bg-white'
           value={selectedCategory}
           options={categories.map((cat) => ({
             label: cat,
@@ -98,12 +101,11 @@ export function SearchBooks() {
           }))}
           onChange={(e) => setSelectedCategory(e.target.value)}
         />
-
-        {/* Note: Author list depends on current results, which might be weird, but better than empty */}
         <FormSelect
           label="Author"
           id="author"
           name="author"
+          bgColor='bg-white'
           value={selectedAuthor}
           options={authors.map((author) => ({
             label: author,
@@ -116,6 +118,7 @@ export function SearchBooks() {
           label="Publisher"
           id="publisher"
           name="publisher"
+          bgColor='bg-white'
           value={selectedPublisher}
           options={[
             { label: "All Publishers", value: "All" },

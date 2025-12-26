@@ -11,6 +11,8 @@ export interface Book {
   image: string;
   description: string;
   featured?: boolean;
+  publisher_name?: string;
+  publisher_id?: number;
 }
 export interface AddBookErrors {
   isbn?: string;

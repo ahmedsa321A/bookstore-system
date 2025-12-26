@@ -4,7 +4,7 @@ import { BookOpen, ArrowLeft } from "lucide-react";
 
 export const Unauthorized = () => {
     const { user } = useAppSelector((state) => state.auth);
-    const redirectPath = user?.Role === "Customer" ? "/customer" : "/admin";
+    const redirectPath = user?.role === "CUSTOMER" ? "/customer" : "/admin";
 
     return (
         <div className="flex min-h-screen bg-secondary/30">

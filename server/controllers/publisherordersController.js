@@ -3,6 +3,32 @@ const util = require('util');
 
 const query = util.promisify(db.query).bind(db);
 
+exports.placePublisherOrder = async (req, res) => {
+    try {
+        const { isbn, quantity } = req.body;
+
+        // Get book to find publisher
+        const book = await query("SELECT publisher_id, Title FROM Books WHERE ISBN = ?", [isbn]);
+        if (book.length === 0) return res.status(404).json("Book not found.");
+        const publisherId = book[0].publisher_id;
+
+        await query("START TRANSACTION");
+
+        // Create Order
+        const orderResult = await query("INSERT INTO publisher_orders (publisher_id, order_date, status) VALUES (?, NOW(), 'Pending')", [publisherId]);
+        const orderId = orderResult.insertId;
+
+        // Create Order Item
+        await query("INSERT INTO publisher_order_items (publisher_order_id, isbn, quantity, price) VALUES (?, ?, ?, 0)", [orderId, isbn, quantity]);
+
+        await query("COMMIT");
+        return res.status(201).json("Order placed successfully.");
+    } catch (err) {
+        await query("ROLLBACK");
+        return res.status(500).json({ error: err.message });
+    }
+};
+
 exports.getPublisherOrders = async (req, res) => {
     try {
         const sql = `

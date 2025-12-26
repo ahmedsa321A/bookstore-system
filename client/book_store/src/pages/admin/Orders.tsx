@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Package, CheckCircle, AlertTriangle, Truck } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import orderService from '../../api/orderService';
+import bookService from '../../api/bookService';
+import { type Book } from '../../types/book';
 import Loading from '../../components/Loading';
 import AlertCard from '../../components/AlertCard';
 
@@ -20,14 +22,14 @@ export function Orders() {
 
   const { data: lowStockBooks = [], isLoading: isLoadingLowStock } = useQuery({
     queryKey: ['orders', 'low-stock'],
-    queryFn: orderService.getLowStockBooks,
+    queryFn: () => bookService.searchBooks(),
     enabled: activeTab === 'auto',
-    select: (data) => data.map((book: any) => ({
-      ...book,
-      stockQuantity: book.Stock || book.stock, // Handle case sensitivity
-      thresholdQuantity: book.Threshold || book.threshold,
-      publisher: book.publisher || 'Unknown'
-    }))
+    select: (data: Book[]) => data
+      .filter(book => book.stockQuantity < book.thresholdQuantity)
+      .map((book) => ({
+        ...book,
+        publisher: book.publisher || 'Unknown'
+      }))
   });
 
   const { data: publisherOrders = [], isLoading: isLoadingPublisherOrders } = useQuery({
@@ -45,7 +47,6 @@ export function Orders() {
       orderService.placePublisherOrder(isbn, quantity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders', 'low-stock'] });
-      // Also invalidate publisher orders so they appear in valid state if we switch tabs
       queryClient.invalidateQueries({ queryKey: ['orders', 'publisher'] });
       setAlert({ variant: 'success', message: 'Restock order placed successfully.' });
     },
@@ -55,7 +56,7 @@ export function Orders() {
   });
 
   const confirmOrderMutation = useMutation({
-    mutationFn: (id: string | number) => orderService.confirmPublisherOrder(id),
+    mutationFn: (id: string | number) => orderService.confirmPublisherOrder(id.toString()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders', 'publisher'] });
       setAlert({ variant: 'success', message: 'Order confirmed and stock updated.' });
@@ -65,13 +66,22 @@ export function Orders() {
     }
   });
 
+  const cancelOrderMutation = useMutation({
+    mutationFn: (id: string | number) => orderService.cancelPublisherOrder(id.toString()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders', 'publisher'] });
+      setAlert({ variant: 'success', message: 'Order cancelled successfully.' });
+    },
+    onError: (err: any) => {
+      setAlert({ variant: 'error', title: 'Cancellation Failed', message: err.response?.data || 'Failed to cancel order.' });
+    }
+  });
+
   // --- Handlers ---
 
 
 
   const handleAutoOrder = (book: any) => {
-    // Logic: Order double the threshold minus current stock, or at least threshold
-    // Simple logic: Order enough to reach 2x threshold.
     const qtyToOrder = Math.max((book.thresholdQuantity * 2) - book.stockQuantity, 10); // Minimum 10
     if (confirm(`Place order for ${qtyToOrder} copies of "${book.Title || book.title}"?`)) {
       placeOrderMutation.mutate({ isbn: book.ISBN || book.isbn, quantity: qtyToOrder });
@@ -84,9 +94,11 @@ export function Orders() {
     }
   };
 
-  // --- Loading State ---
-  // We can show loading spinner inside the tab content or global. 
-  // Let's do it inside for better UX.
+  const handleCancelOrder = (orderId: string | number) => {
+    if (confirm("Are you sure you want to cancel this order?")) {
+      cancelOrderMutation.mutate(orderId);
+    }
+  };
 
   return (
     <div>
@@ -160,13 +172,11 @@ export function Orders() {
                     <th className="px-6 py-3 text-left">Publisher</th>
                     <th className="px-6 py-3 text-left">Current Qty</th>
                     <th className="px-6 py-3 text-left">Threshold</th>
-                    <th className="px-6 py-3 text-left">Suggested Order</th>
                     <th className="px-6 py-3 text-left">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {lowStockBooks.map((book: any) => {
-                    const autoOrderQty = Math.max((book.thresholdQuantity * 2) - book.stockQuantity, 10);
                     return (
                       <tr key={book.ISBN || book.isbn} className="hover:bg-secondary/30">
                         <td className="px-6 py-4">{book.Title || book.title}</td>
@@ -177,15 +187,12 @@ export function Orders() {
                         </td>
                         <td className="px-6 py-4 text-muted-foreground">{book.thresholdQuantity}</td>
                         <td className="px-6 py-4">
-                          <span className="text-green-600 font-semibold">{autoOrderQty}</span>
-                        </td>
-                        <td className="px-6 py-4">
                           <button
                             onClick={() => handleAutoOrder(book)}
                             disabled={placeOrderMutation.isPending}
                             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                           >
-                            {placeOrderMutation.isPending ? 'Placing...' : 'Place Order'}
+                            {placeOrderMutation.isPending ? 'Confirming...' : 'Place Order'}
                           </button>
                         </td>
                       </tr>
@@ -231,39 +238,52 @@ export function Orders() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {publisherOrders.map((order: any) => (
-                    <tr key={order.id} className="hover:bg-secondary/30">
-                      <td className="px-6 py-4 font-mono">#{order.id}</td>
-                      <td className="px-6 py-4">{order.title}</td>
-                      <td className="px-6 py-4 font-mono text-sm">{order.isbn}</td>
-                      <td className="px-6 py-4">{order.publisher}</td>
-                      <td className="px-6 py-4">{order.orderQuantity}</td>
-                      <td className="px-6 py-4">{new Date(order.date).toLocaleDateString()}</td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-block px-3 py-1 rounded-full text-sm ${order.status === 'Pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : order.status === 'Received' || order.status === 'Confirmed'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100'
-                            }`}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {order.status === 'Pending' && (
-                          <button
-                            onClick={() => handleConfirmOrder(order.id)}
-                            disabled={confirmOrderMutation.isPending}
-                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  {publisherOrders.map((order: any) => {
+                    // The backend returns items in an array. We'll verify there's at least one item.
+                    const item = order.items && order.items.length > 0 ? order.items[0] : {};
+                    return (
+                      <tr key={order.order_id} className="hover:bg-secondary/30">
+                        <td className="px-6 py-4 font-mono">#{order.order_id}</td>
+                        <td className="px-6 py-4">{item.title || 'Unknown Title'}</td>
+                        <td className="px-6 py-4 font-mono text-sm">{item.isbn || '-'}</td>
+                        <td className="px-6 py-4">{order.publisher}</td>
+                        <td className="px-6 py-4">{item.quantity || 0}</td>
+                        <td className="px-6 py-4">{new Date(order.date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-sm ${order.status === 'Pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : order.status === 'Received' || order.status === 'Confirmed'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100'
+                              }`}
                           >
-                            {confirmOrderMutation.isPending ? 'Confirming...' : 'Confirm Receipt'}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {order.status === 'Pending' && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleConfirmOrder(order.order_id)}
+                                disabled={confirmOrderMutation.isPending}
+                                className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 text-sm"
+                              >
+                                {confirmOrderMutation.isPending ? 'Confirming...' : 'Confirm'}
+                              </button>
+                              <button
+                                onClick={() => handleCancelOrder(order.order_id)}
+                                disabled={cancelOrderMutation.isPending}
+                                className="px-3 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90 transition-colors disabled:opacity-50 text-sm"
+                              >
+                                {cancelOrderMutation.isPending ? 'Deleting...' : 'Delete'}
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

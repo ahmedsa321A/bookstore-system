@@ -16,6 +16,7 @@ interface FormSelectProps {
     compact?: boolean;
     error?: string;
     required?: boolean;
+    bgColor?: string;
     onChange: (e: { target: { name: string; value: string } }) => void;
 }
 
@@ -28,6 +29,7 @@ const FormSelect: React.FC<FormSelectProps> = ({
     compact,
     error,
     required,
+    bgColor,
     onChange,
 }) => {
     const baseClasses = compact
@@ -56,7 +58,7 @@ const FormSelect: React.FC<FormSelectProps> = ({
                     id={id}
                     className={`
             flex items-center justify-between
-              bg-input-background
+              ${bgColor || 'bg-input-background'}
             ${baseClasses}
             ${borderClasses}
           `}

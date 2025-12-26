@@ -67,11 +67,11 @@ export function ModifyBooks() {
         message: "Book deleted successfully.",
       });
     },
-    onError: (err) => {
+    onError: (err: any) => {
       setAlert({
         variant: "error",
         title: "Delete Failed",
-        message: "Failed to delete book.",
+        message: err.response?.data || "Failed to delete book.",
       });
       console.error(err);
     }
@@ -96,16 +96,6 @@ export function ModifyBooks() {
       return;
     }
 
-    // Prepare payload for backend
-    // Backend expects: title, publication_year, price, stock, threshold, publisher_id, category, image
-    // Note: We need publisher_id, but editData might only have publisher name from the Book object? 
-    // The current Book object has 'publisher' string. 'publisher_id' is not in the clean Book type. 
-    // This is a limitation of the current normalization. 
-    // For now, let's assume we can only update fields available.
-    // If publisher_id is needed, we would need to fetch it or store it in the normalized Book type.
-    // Let's add publisher_id to Book type? Or just send what we have.
-    // Wait, the backend requires publisher_id? 
-    // 'if (updates.publisher_id) currentBook.publisher_id = updates.publisher_id;' - it's optional in update.
 
     const payload = {
       isbn: editingIsbn,
@@ -116,11 +106,6 @@ export function ModifyBooks() {
       category: editData.category,
       image: editData.image,
       publication_year: editData.publicationYear,
-      // authors? Backend doesn't seem to support updating authors via modifyBook endpoint easily (it only updates Books table)
-      // Check modifyBook controller... it updates Books table. Authors are in BookAuthors table. 
-      // The modifyBook logic in controller DOES NOT update authors.
-      // So editing authors here won't persist in backend with current controller logic.
-      // I will comment this out or just warn the user.
     };
 
     updateMutation.mutate(payload);
@@ -196,7 +181,7 @@ export function ModifyBooks() {
                           value={editData.isbn}
                           error={errors.isbn}
                           compact
-                          disabled 
+                          disabled
                           onChange={(e) =>
                             setEditData({ ...editData, isbn: e.target.value })
                           }
@@ -214,20 +199,6 @@ export function ModifyBooks() {
                           }
                         />
                       </td>
-                      {/* Removing Author edit for now as backend doesn't support it in modifyBook */}
-                      {/* <td className="px-6 py-4">
-                        <FormInput
-                          id="authors"
-                          name="authors"
-                          value={editData.authors}
-                          error={errors.authors}
-                          compact
-                          placeholder="Author 1, Author 2"
-                          onChange={(e) =>
-                            setEditData({ ...editData, authors: e.target.value })
-                          }
-                        />
-                      </td> */}
                       <td className="px-6 py-4">
                         <FormSelect
                           label=""
@@ -303,7 +274,6 @@ export function ModifyBooks() {
                     <>
                       <td className="px-6 py-4 font-mono text-sm">{book.isbn}</td>
                       <td className="px-6 py-4">{book.title}</td>
-                      {/* <td className="px-6 py-4">{book.authors.join(', ')}</td> */}
                       <td className="px-6 py-4">
                         <span className="inline-block px-2 py-1 bg-secondary rounded text-sm">
                           {book.category}

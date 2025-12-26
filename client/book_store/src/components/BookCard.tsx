@@ -10,7 +10,6 @@ interface BookCardProps {
 
 export function BookCard({ book, onAddToCart, showDetails = true }: BookCardProps) {
   const inStock = book.stockQuantity > 0;
-
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="aspect-3/4 overflow-hidden bg-secondary/20 relative">
@@ -33,7 +32,7 @@ export function BookCard({ book, onAddToCart, showDetails = true }: BookCardProp
         </span>
         <h3 className="mb-1 line-clamp-2">{book.title}</h3>
         <p className="text-muted-foreground mb-2">{book.authors?.join(', ') || 'Unknown Author'}</p>
-        <p className="text-sm text-muted-foreground mb-3">{book.publisher || 'Unknown Publisher'}</p>
+        <p className="text-sm text-muted-foreground mb-3">{book.publisher_name || 'Unknown Publisher'}</p>
         <div className="flex items-center justify-between mt-4">
           <span className="text-primary">${book.price.toFixed(2)}</span>
           <div className="flex gap-2">

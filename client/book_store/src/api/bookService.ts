@@ -18,7 +18,9 @@ const transformBook = (data: any): Book => {
         // Backend returns authors as matched array, or comma-separated string if from raw SQL without map. 
         // Our controller now returns array, but let's be safe.
         authors: Array.isArray(data.authors) ? data.authors : (data.authors || '').split(',').filter(Boolean),
-        publisher: data.publisher || 'Unknown Publisher',
+        publisher: data.publisher_name || 'Unknown Publisher',
+        publisher_name: data.publisher_name,
+        publisher_id: data.publisher_id,
         publicationYear: data.publication_year,
         price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
         category: data.category,
@@ -41,8 +43,16 @@ const bookService = {
         if (filters.author) params.append('author', filters.author);
         if (filters.publisher) params.append('publisher', filters.publisher);
 
-        const response = await api.get<any[]>(`/books/search?${params.toString()}`);
-        return response.data.map(transformBook);
+        try {
+            const response = await api.get<any[]>(`/books/search?${params.toString()}`);
+            return response.data.map(transformBook);
+        } catch (error: any) {
+            // If 404, it means no books found (per current backend logic). Return empty array.
+            if (error.response && error.response.status === 404) {
+                return [];
+            }
+            throw error;
+        }
     },
 
     // POST /api/books/add
@@ -77,6 +87,8 @@ const bookService = {
         const response = await api.get('/books/publishers');
         return response.data as { publisher_id: number, name: string }[];
     },
+
+    
 };
 
 export default bookService;

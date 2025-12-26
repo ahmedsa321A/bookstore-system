@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ShoppingCart, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
@@ -5,11 +6,17 @@ import { useAppDispatch } from '../../store/hooks';
 import { addToCart } from '../../store/slices/cartSlice';
 import bookService from '../../api/bookService';
 import Loading from '../../components/Loading';
+import AlertCard from '../../components/AlertCard';
 
 export function BookDetails() {
   const { isbn } = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [alert, setAlert] = useState<{
+    variant: 'success' | 'error';
+    title?: string;
+    message: string;
+  } | null>(null);
 
   const { data: books = [], isLoading, error } = useQuery({
     queryKey: ['book', isbn],
@@ -35,10 +42,7 @@ export function BookDetails() {
     );
   }
 
-  // Normalize data (backend vs frontend types)
-  // Data is already normalized by the service
   const book = bookData;
-
   const inStock = book.stockQuantity > 0;
 
   return (
@@ -50,6 +54,17 @@ export function BookDetails() {
         <ArrowLeft className="h-4 w-4" />
         Back
       </button>
+
+      {alert && (
+        <div className="mb-4">
+          <AlertCard
+            variant={alert.variant}
+            title={alert.title}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-8">
@@ -122,7 +137,11 @@ export function BookDetails() {
               <button
                 onClick={() => {
                   dispatch(addToCart(book));
-                  alert('Book added to cart!');
+                  setAlert({
+                    variant: 'success',
+                    title: 'Added to Cart',
+                    message: `${book.title} has been added to your shopping cart.`
+                  });
                 }}
                 className="w-full py-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
               >
