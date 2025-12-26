@@ -80,6 +80,7 @@ CREATE TABLE `books` (
   `threshold` int NOT NULL,
   `publisher_id` int NOT NULL,
   `category` enum('Science','Art','Religion','History','Geography') NOT NULL,
+  `image` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`isbn`),
   KEY `publisher_id_idx` (`publisher_id`),
   CONSTRAINT `publisher_id` FOREIGN KEY (`publisher_id`) REFERENCES `publishers` (`publisher_id`)
@@ -149,38 +150,6 @@ DELIMITER ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
 
---
--- Table structure for table `cart`
---
-
-DROP TABLE IF EXISTS `cart`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `cart` (
-  `cart_id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `isbn` varchar(13) NOT NULL,
-  `quantity` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`cart_id`),
-  KEY `user_id_idx` (`user_id`),
-  KEY `isbn_idx` (`isbn`),
-  CONSTRAINT `cart_book_fk` FOREIGN KEY (`isbn`) REFERENCES `books` (`isbn`) ON DELETE CASCADE,
-  CONSTRAINT `cart_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `cart`
---
-
-LOCK TABLES `cart` WRITE;
-/*!40000 ALTER TABLE `cart` DISABLE KEYS */;
-/*!40000 ALTER TABLE `cart` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `customer_orders`
---
 
 DROP TABLE IF EXISTS `customer_orders`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -377,4 +346,5 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-12-20 21:25:42
+
 
