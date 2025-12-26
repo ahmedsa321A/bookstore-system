@@ -91,7 +91,6 @@
       "price": 29.99,
       "stock": 100,
       "threshold": 10,
-      "publisher_id": 1,
       "threshold": 10,
       "publisher_id": 1,
       "category": "Science",
@@ -162,4 +161,77 @@
     }
     ```
 *   **Response**: `200 OK` - "Order placed successfully! Transaction Complete."
+
+### Get Order History
+*   **URL**: `GET /api/orders/getCustomerOrderHistory`
+*   **Auth**: User Token
+*   **Response**: `200 OK` - Array of past orders with details.
+
+---
+
+## 5. Publisher Management (Admin Only)
+
+### Get All Publishers
+*   **URL**: `GET /api/books/publishers`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - JSON array of all publishers.
+
+### Get Publisher Orders
+*   **URL**: `GET /api/books/publisher/orders`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - JSON array of all publisher orders with items.
+
+### Confirm Publisher Order
+*   **URL**: `PUT /api/books/publisher/order/confirm/:orderId`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - "Order confirmed and stock updated."
+
+### Cancel Publisher Order
+*   **URL**: `PUT /api/books/publisher/order/cancel/:orderId`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - "Order cancelled successfully."
+
+### Place Publisher Order
+*   **URL**: `PUT /api/books/publisher/order`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - "Order cancelled successfully."
+*   **body**
+```
+JSON
+{
+  "isbn": "9780132350881"
+}
+```
+
+---
+
+## 6. System Reports (Admin Only)
+
+### Get Sales Last Month
+*   **URL**: `GET /api/admin/sales/last-month`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - Object containing period and total sales.
+
+### Get Sales by Date
+*   **URL**: `GET /api/admin/sales/date`
+*   **Auth**: Admin Token
+*   **Query Param**: `?date=YYYY-MM-DD`
+*   **Response**: `200 OK` - Object containing date and total sales.
+
+### Get Top 5 Customers
+*   **URL**: `GET /api/admin/top-customers`
+*   **Auth**: Admin Token
+*   **Description**: Top 5 customers by spending in the last 3 months.
+*   **Response**: `200 OK` - JSON array of customers with total spent.
+
+### Get Top 10 Selling Books
+*   **URL**: `GET /api/admin/top-books`
+*   **Auth**: Admin Token
+*   **Description**: Top 10 books by quantity sold in the last 3 months.
+*   **Response**: `200 OK` - JSON array of books with total copies sold.
+
+### Get Replenishment Stats
+*   **URL**: `GET /api/admin/replenishment/:isbn`
+*   **Auth**: Admin Token
+*   **Response**: `200 OK` - Object showing times ordered and total quantity received from publishers.
 

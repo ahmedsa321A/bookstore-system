@@ -1,0 +1,354 @@
+import { useState } from 'react';
+import { Search, Edit, Trash2, Save, X } from 'lucide-react';
+import { type Book } from '../../types/book';
+import { validateModifyBook } from "../../utils/helper";
+import { ConfirmModal } from "../../components/ConfirmModal";
+import AlertCard from '../../components/AlertCard';
+import FormInput from '../../components/FormInput';
+import FormSelect from '../../components/FormSelect';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import bookService from '../../api/bookService';
+import Loading from '../../components/Loading';
+import { useDebounce } from '../../hooks/useDebounce';
+
+export function ModifyBooks() {
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const categories = ['All', 'Science', 'Art', 'Religion', 'History', 'Geography'];
+  const [editingIsbn, setEditingIsbn] = useState<string | null>(null);
+  const [editData, setEditData] = useState<any>(null);
+  const [errors, setErrors] = useState<any>({});
+  const [alert, setAlert] = useState<{
+    variant: 'success' | 'error';
+    title?: string;
+    message: string;
+  } | null>(null);
+  const [deleteIsbn, setDeleteIsbn] = useState<string | null>(null);
+
+  // Fetch books from backend
+  const { data, isLoading } = useQuery({
+    queryKey: ['books', debouncedSearchQuery, selectedCategory],
+    queryFn: () => bookService.searchBooks({
+      // If query is ISBN-like, search by ISBN, else Title
+      isbn: /^[0-9-]+$/.test(debouncedSearchQuery) && debouncedSearchQuery.length > 5 ? debouncedSearchQuery : undefined,
+      title: !(/^[0-9-]+$/.test(debouncedSearchQuery)) ? debouncedSearchQuery : undefined,
+      category: selectedCategory !== 'All' ? selectedCategory : undefined,
+    }),
+  });
+
+  const books = data?.books || [];
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => bookService.updateBook(data.isbn, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      setEditingIsbn(null);
+      setEditData(null);
+      setErrors({});
+      setAlert({
+        variant: "success",
+        title: "Updated",
+        message: "Book updated successfully.",
+      });
+    },
+    onError: (err) => {
+      setAlert({
+        variant: "error",
+        title: "Update Failed",
+        message: "Failed to update book. Please try again.",
+      });
+      console.error(err);
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (isbn: string) => bookService.deleteBook(isbn),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      setDeleteIsbn(null);
+      setAlert({
+        variant: "success",
+        title: "Deleted",
+        message: "Book deleted successfully.",
+      });
+    },
+    onError: (err: any) => {
+      setAlert({
+        variant: "error",
+        title: "Delete Failed",
+        message: err.response?.data || "Failed to delete book.",
+      });
+      console.error(err);
+    }
+  });
+
+
+  const handleEdit = (book: Book) => {
+    setEditingIsbn(book.isbn);
+    setEditData({ ...book, authors: book.authors.join(', ') });
+  };
+
+  const handleSave = () => {
+    const validationErrors = validateModifyBook(editData);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setAlert({
+        variant: "error",
+        title: "Validation Error",
+        message: "Please fix the highlighted fields before saving.",
+      });
+      return;
+    }
+
+
+    const payload = {
+      isbn: editingIsbn,
+      title: editData.title,
+      price: editData.price,
+      stock: editData.stockQuantity,
+      threshold: editData.thresholdQuantity,
+      category: editData.category,
+      image: editData.image,
+      publication_year: editData.publicationYear,
+    };
+
+    updateMutation.mutate(payload);
+  };
+
+
+  const handleCancel = () => {
+    setEditingIsbn(null);
+    setEditData(null);
+  };
+
+  const confirmDelete = () => {
+    if (deleteIsbn) {
+      deleteMutation.mutate(deleteIsbn);
+    }
+  };
+
+  if (isLoading) return <Loading size="large" />;
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="mb-2">Modify Books</h1>
+        <p className="text-muted-foreground">Search and update existing book information</p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by ISBN or title..."
+            className="w-full pl-12 pr-4 py-3 bg-white rounded-lg border border-border focus:border-primary focus:outline-none transition-colors shadow-sm"
+          />
+        </div>
+        <div className="w-full md:w-48">
+          <FormSelect
+            label=""
+            id="filter-category"
+            name="filter-category"
+            value={selectedCategory}
+            options={categories.map(c => ({ label: c, value: c }))}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            bgColor="bg-white"
+          />
+        </div>
+      </div>
+      {alert && (
+        <AlertCard
+          variant={alert.variant}
+          title={alert.title}
+          message={alert.message}
+          duration={3000}
+          onClose={() => setAlert(null)}
+        />
+      )}
+      {/* Books Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-secondary">
+              <tr>
+                <th className="px-6 py-3 text-left">ISBN</th>
+                <th className="px-6 py-3 text-left">Title</th>
+                {/* <th className="px-6 py-3 text-left">Author(s)</th> */}
+                <th className="px-6 py-3 text-left">Category</th>
+                <th className="px-6 py-3 text-left">Stock</th>
+                <th className="px-6 py-3 text-left">Price</th>
+                <th className="px-6 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {books.map((book) => (
+                <tr key={book.isbn} className="hover:bg-secondary/30">
+                  {editingIsbn === book.isbn ? (
+                    <>
+                      <td className="px-6 py-4">
+                        <FormInput
+                          id="isbn"
+                          name="isbn"
+                          value={editData.isbn}
+                          error={errors.isbn}
+                          compact
+                          disabled
+                          onChange={(e) =>
+                            setEditData({ ...editData, isbn: e.target.value })
+                          }
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <FormInput
+                          id="title"
+                          name="title"
+                          value={editData.title}
+                          error={errors.title}
+                          compact
+                          onChange={(e) =>
+                            setEditData({ ...editData, title: e.target.value })
+                          }
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <FormSelect
+                          label=""
+                          id="category"
+                          name="category"
+                          value={editData.category}
+                          error={errors.category}
+                          compact
+                          onChange={(e) =>
+                            setEditData({ ...editData, category: e.target.value })
+                          }
+                          options={[
+                            { label: "Science", value: "Science" },
+                            { label: "Art", value: "Art" },
+                            { label: "Religion", value: "Religion" },
+                            { label: "History", value: "History" },
+                            { label: "Geography", value: "Geography" },
+                          ]}
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <FormInput
+                          label=""
+                          id="stockQuantity"
+                          name="stockQuantity"
+                          type="number"
+                          value={editData.stockQuantity.toString()}
+                          error={errors.stockQuantity}
+                          compact
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              stockQuantity: Number(e.target.value),
+                            })
+                          }
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <FormInput
+                          label=""
+                          id="price"
+                          name="price"
+                          type="number"
+                          value={editData.price.toString()}
+                          error={errors.price}
+                          compact
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              price: Number(e.target.value),
+                            })
+                          }
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSave}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                          >
+                            <Save className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={handleCancel}
+                            className="p-2 text-muted-foreground hover:bg-secondary/30 rounded transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-6 py-4 font-mono text-sm">{book.isbn}</td>
+                      <td className="px-6 py-4">{book.title}</td>
+                      <td className="px-6 py-4">
+                        <span className="inline-block px-2 py-1 bg-secondary rounded text-sm">
+                          {book.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={
+                            book.stockQuantity < book.thresholdQuantity
+                              ? 'text-destructive'
+                              : 'text-foreground'
+                          }
+                        >
+                          {book.stockQuantity}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">${book.price.toFixed(2)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(book)}
+                            className="p-2 text-primary hover:bg-primary/10 rounded transition-colors"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteIsbn(book.isbn)}
+                            className="p-2 text-destructive hover:bg-destructive/10 rounded"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+
+                        </div>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {deleteIsbn && (
+        <ConfirmModal
+          title="Delete Book"
+          description="Are you sure you want to delete this book? This action cannot be undone."
+          onCancel={() => setDeleteIsbn(null)}
+          onConfirm={confirmDelete}
+        />
+      )}
+
+      {books.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No books found matching your search.</p>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -4,6 +4,7 @@ const bookControllerAdmin = require('../controllers/bookControllerAdmin');
 const verifyToken = require('../middleware/verifyToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const { validateAddBook, validateModifyBook } = require('../middleware/bookValidation');
+const { getPublisherOrders, confirmPublisherOrder, cancelPublisherOrder, placePublisherOrder } = require('../controllers/publisherordersController');
 
 const router = express.Router();
 
@@ -15,5 +16,11 @@ router.put('/update/:isbn', verifyToken, verifyAdmin, validateModifyBook, bookCo
 router.delete('/delete/:isbn', verifyToken, verifyAdmin, bookControllerAdmin.deleteBook);
 router.post('/addAuthor', verifyToken, verifyAdmin, bookControllerAdmin.addAuthor);
 router.post('/addPublisher', verifyToken, verifyAdmin, bookControllerAdmin.addPublisher);
+router.get('/publishers', verifyToken, bookControllerAdmin.getAllPublishers);
 
+router.get('/publisher/orders', verifyToken, verifyAdmin, getPublisherOrders);
+router.post('/publisher/order', verifyToken, verifyAdmin, placePublisherOrder);
+
+router.put('/publisher/order/confirm/:orderId', verifyToken, verifyAdmin, confirmPublisherOrder);
+router.put('/publisher/order/cancel/:orderId', verifyToken, verifyAdmin, cancelPublisherOrder);
 module.exports = router;

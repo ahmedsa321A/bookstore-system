@@ -3,7 +3,7 @@ const getValidationErrors = (data = {}, isUpdate = false) => {
     const errors = [];
 
     if (!isUpdate) {
-        if (!isbn || !title || !publication_year || price === undefined || stock === undefined || threshold === undefined || !publisher_id || !category) {
+        if (!isbn || !title || !publication_year || price === undefined || stock === undefined || threshold === undefined || (!publisher_id && !data.publisher) || !category) {
             return ["All fields are required."];
         }
         if (!author || (Array.isArray(author) && author.length === 0)) {
@@ -11,10 +11,10 @@ const getValidationErrors = (data = {}, isUpdate = false) => {
         }
     }
 
-    if (isbn && isbn.length !== 13) errors.push("ISBN must be exactly 13 characters long.");
-    if (title && title.length > 255) errors.push("Title cannot exceed 255 characters.");
+
+
     if (price !== undefined && price < 0) errors.push("Price cannot be negative.");
-    if (stock !== undefined && threshold !== undefined && stock < threshold) errors.push("Stock cannot be less than threshold.");
+
 
     if (category && !["Science", "Art", "Religion", "History", "Geography"].includes(category)) {
     };
