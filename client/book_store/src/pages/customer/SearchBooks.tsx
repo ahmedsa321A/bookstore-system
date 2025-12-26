@@ -171,18 +171,45 @@ export function SearchBooks() {
                 Prev
               </button>
 
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 rounded border ${currentPage === i + 1
-                    ? 'bg-primary text-white'
-                    : 'bg-white'
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+              {(() => {
+                // Generate page numbers: First 3, Last 2, and Current
+                const pageSet = new Set([
+                  1, 2, 3,
+                  totalPages - 1, totalPages,
+                  currentPage
+                ]);
+
+                const sortedPages = Array.from(pageSet)
+                  .filter((p) => p >= 1 && p <= totalPages)
+                  .sort((a, b) => a - b);
+
+                const paginationItems: (number | string)[] = [];
+                let previousPage: number | null = null;
+
+                for (const page of sortedPages) {
+                  if (previousPage !== null && page - previousPage > 1) {
+                    paginationItems.push('...');
+                  }
+                  paginationItems.push(page);
+                  previousPage = page;
+                }
+
+                return paginationItems.map((item, index) => (
+                  <button
+                    key={`${item}-${index}`}
+                    onClick={() => typeof item === 'number' && setCurrentPage(item)}
+                    disabled={typeof item !== 'number'}
+                    className={`px-3 py-1 rounded border ${item === currentPage
+                        ? 'bg-primary text-white'
+                        : typeof item === 'number'
+                          ? 'bg-white hover:bg-gray-50'
+                          : 'bg-transparent border-none cursor-default'
+                      }`}
+                  >
+                    {item}
+                  </button>
+                ));
+              })()}
 
               <button
                 disabled={currentPage === totalPages}
