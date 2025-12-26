@@ -37,7 +37,7 @@ cosine_sim = None
 
 def train_model():
     global df_books, cosine_sim
-    print("Training Recommendation Model...")
+    print("Training Recommendation Model....")
     
     df_books = get_data_from_db()
     
