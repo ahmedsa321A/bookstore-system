@@ -163,3 +163,8 @@
     ```
 *   **Response**: `200 OK` - "Order placed successfully! Transaction Complete."
 
+### Get Order History
+*   **URL**: `GET /api/orders/getCustomerOrderHistory`
+*   **Auth**: User Token
+*   **Response**: `200 OK` - Array of past orders with details.
+

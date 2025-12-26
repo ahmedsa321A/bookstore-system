@@ -1,5 +1,7 @@
 const db = require('../config/db');
+const util = require('util');
 
+const query = util.promisify(db.query).bind(db);
 exports.checkout = (req, res) => {
     const userId = req.user.id;
     const { cardNumber, cartItems } = req.body;
@@ -93,4 +95,64 @@ exports.checkout = (req, res) => {
             });
         });
     });
+};
+
+exports.getCustomerOrderHistory = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const sql = `
+            SELECT 
+                co.order_id, 
+                co.order_date, 
+                co.total_price,
+                oi.isbn, 
+                oi.quantity, 
+                oi.price AS unit_price,
+                b.title, 
+                b.image
+            FROM customer_orders co
+            JOIN order_items oi ON co.order_id = oi.order_id
+            JOIN books b ON oi.isbn = b.isbn
+            WHERE co.customer_id = ?
+            ORDER BY co.order_date DESC, co.order_id DESC
+        `;
+
+        const rows = await query(sql, [userId]);
+
+        if (rows.length === 0) {
+            return res.status(200).json([]);
+        }
+
+
+
+        const ordersMap = new Map();
+
+        for (const row of rows) {
+            if (!ordersMap.has(row.order_id)) {
+                ordersMap.set(row.order_id, {
+                    order_id: row.order_id,
+                    order_date: row.order_date,
+                    total_price: row.total_price,
+                    items: []
+                });
+            }
+
+            ordersMap.get(row.order_id).items.push({
+                isbn: row.isbn,
+                title: row.title,
+                image: row.image,
+                quantity: row.quantity,
+                unit_price: row.unit_price
+            });
+        }
+
+        const formattedHistory = Array.from(ordersMap.values());
+
+        return res.status(200).json(formattedHistory);
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: err.message });
+    }
 };
