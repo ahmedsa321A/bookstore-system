@@ -1,6 +1,4 @@
 const db = require('../config/db');
-const util = require('util');
-const query = util.promisify(db.query).bind(db);
 
 const getThreeMonthsAgoDate = () => {
     const d = new Date();
@@ -17,7 +15,7 @@ exports.getSalesLastMonth = async (req, res) => {
             AND MONTH(order_date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)
         `;
 
-        const result = await query(sql);
+        const [result] = await db.query(sql);
         return res.status(200).json({
             period: "Previous Month",
             total_sales: result[0].total_sales || 0
@@ -38,7 +36,7 @@ exports.getSalesByDate = async (req, res) => {
             WHERE order_date = ?
         `;
 
-        const result = await query(sql, [date]);
+        const [result] = await db.query(sql, [date]);
         return res.status(200).json({
             date: date,
             total_sales: result[0].total_sales || 0
@@ -67,7 +65,7 @@ exports.getTopCustomers = async (req, res) => {
             LIMIT 5
         `;
 
-        const result = await query(sql, [dateLimit]);
+        const [result] = await db.query(sql, [dateLimit]);
         return res.status(200).json(result);
     } catch (err) {
         return res.status(500).json({ error: err.message });
@@ -92,7 +90,7 @@ exports.getTopSellingBooks = async (req, res) => {
             LIMIT 10
         `;
 
-        const result = await query(sql, [dateLimit]);
+        const [result] = await db.query(sql, [dateLimit]);
         return res.status(200).json(result);
     } catch (err) {
         return res.status(500).json({ error: err.message });
@@ -114,7 +112,7 @@ exports.getBookReplenishmentStats = async (req, res) => {
             GROUP BY b.isbn
         `;
 
-        const result = await query(sql, [isbn]);
+        const [result] = await db.query(sql, [isbn]);
 
         if (result.length === 0) {
             return res.status(404).json("Book not found.");

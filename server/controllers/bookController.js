@@ -1,7 +1,5 @@
 const db = require("../config/db");
-const util = require("util");
 
-const query = util.promisify(db.query).bind(db);
 exports.searchBooks = async (req, res) => {
   try {
     const { isbn, title, category, author, publisher } = req.query;
@@ -9,6 +7,7 @@ exports.searchBooks = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
+    // 1. Base Query Construction
     let queryStr = `
         SELECT Books.*, 
                Publishers.Name AS publisher_name, 
@@ -27,8 +26,9 @@ exports.searchBooks = async (req, res) => {
       "LEFT JOIN Authors ON BookAuthors.author_id = Authors.author_id",
     ];
 
+    // 2. Filter Logic
     let conditions = [];
-    let values = [];
+    let values = []; // This array stays CLEAN (only filters)
 
     if (isbn) {
       conditions.push("Books.ISBN = ?");
@@ -51,10 +51,10 @@ exports.searchBooks = async (req, res) => {
       values.push(`%${publisher}%`);
     }
 
+    // 3. Combine Queries
     const joinStr = joins.join(" ") + " ";
-
     queryStr += joinStr;
-    countQueryStr += joinStr; // Join is needed for filtering by author/publisher
+    countQueryStr += joinStr; 
 
     if (conditions.length > 0) {
       const conditionStr = "WHERE " + conditions.join(" AND ");
@@ -63,16 +63,18 @@ exports.searchBooks = async (req, res) => {
     }
 
     queryStr += " GROUP BY Books.ISBN";
-
+    
+    // 4. Pagination
     queryStr += " LIMIT ? OFFSET ? ";
-    values.push(limit, offset);
-
-    // Values for the main query include pagination
+    
+    // Create a NEW array for the main query that includes limit/offset
+    // We do NOT modify 'values' because 'countQueryStr' needs 'values' without limits.
     const queryValues = [...values, limit, offset];
 
-    // Execute queries
-    const [books] = await db.promise().query(queryStr, queryValues);
-    const [countResult] = await db.promise().query(countQueryStr, values);
+    // 5. Execute
+    // Note: We use 'db.query' directly because we exported 'pool.promise()' in config/db.js
+    const [books] = await db.query(queryStr, queryValues);
+    const [countResult] = await db.query(countQueryStr, values);
 
     const total = countResult[0]?.total || 0;
 
@@ -83,8 +85,9 @@ exports.searchBooks = async (req, res) => {
       limit,
       totalPages: Math.ceil(total / limit)
     });
+
   } catch (err) {
-    console.error(err);
+    console.error("Search Error:", err);
     return res.status(500).json({ error: err.message });
   }
 };
@@ -92,10 +95,10 @@ exports.searchBooks = async (req, res) => {
 exports.getAllAuthors = async (req, res) => {
   try {
     const queryStr = "SELECT * FROM Authors ORDER BY Name ASC";
-    const [authors] = await db.promise().query(queryStr);
+    const [authors] = await db.query(queryStr);
     return res.status(200).json(authors);
   } catch (err) {
-    console.error(err);
+    console.error("Authors Error:", err);
     return res.status(500).json({ error: err.message });
   }
 };

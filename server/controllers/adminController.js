@@ -1,12 +1,9 @@
 const db = require("../config/db");
-const util = require("util");
-
-const query = util.promisify(db.query).bind(db);
 
 exports.confirmOrder = async (req, res) => {
   try {
     const { orderId } = req.body;
-    const results = await query(
+    const [results] = await db.query(
       `
         SELECT * 
         FROM Publisher_orders as po
@@ -22,8 +19,8 @@ exports.confirmOrder = async (req, res) => {
 
     const isbn = results[0].ISBN;
     const quantity = results[0].Quantity;
-    
-    await query(
+
+    await db.query(
       `
         UPDATE Books
         SET Stock = Stock + ?
@@ -32,7 +29,7 @@ exports.confirmOrder = async (req, res) => {
       [quantity, isbn]
     );
 
-    await query(
+    await db.query(
       `
         UPDATE Publisher_orders
         SET Status = 'Confirmed'
@@ -40,7 +37,7 @@ exports.confirmOrder = async (req, res) => {
         `,
       [orderId]
     );
-    
+
     return res
       .status(200)
       .json("Order confirmed and stock updated successfully!");

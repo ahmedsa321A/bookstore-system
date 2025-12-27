@@ -7,6 +7,7 @@ import FormInput from '../../components/FormInput';
 import AlertCard from '../../components/AlertCard';
 import type { CheckoutRequest } from '../../api/orderService';
 import orderService from '../../api/orderService';
+import { CustomButton } from '../../components/CustomButton';
 
 export function Checkout() {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export function Checkout() {
   const cartItems = useAppSelector((state) => state.cart.items);
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const total = subtotal;
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const dispatch = useAppDispatch();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -63,6 +65,7 @@ export function Checkout() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    setIsCheckoutLoading(true);
     e.preventDefault();
     setAlert(null);
 
@@ -72,6 +75,7 @@ export function Checkout() {
         title: "Validation Error",
         message: "Please check your payment details.",
       });
+      setIsCheckoutLoading(false);
       return;
     }
     const orderRequest: CheckoutRequest = {
@@ -89,7 +93,9 @@ export function Checkout() {
         title: "Payment Successful",
         message: response,
       });
+
       setTimeout(() => {
+        setIsCheckoutLoading(false);
         dispatch(clearCart());
       }, 3000);
 
@@ -100,6 +106,7 @@ export function Checkout() {
         title: "Payment Error",
         message: "Failed to process payment. Please try again.",
       });
+      setIsCheckoutLoading(false);
       return;
     }
 
@@ -199,13 +206,14 @@ export function Checkout() {
                 </div>
               </div>
 
-              <button
+              <CustomButton
                 type="submit"
                 className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                isLoading={isCheckoutLoading}
               >
                 <CheckCircle className="h-5 w-5" />
                 Confirm Payment
-              </button>
+              </CustomButton>
             </div>
           </div>
         </div>

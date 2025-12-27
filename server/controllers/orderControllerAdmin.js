@@ -1,7 +1,4 @@
 const db = require('../config/db');
-const util = require('util');
-
-const query = util.promisify(db.query).bind(db);
 
 exports.getAllCustomerOrders = async (req, res) => {
     try {
@@ -21,12 +18,7 @@ exports.getAllCustomerOrders = async (req, res) => {
             JOIN Customers c ON co.customer_id = c.customer_id
             ORDER BY co.order_date DESC
         `;
-        const orders = await query(ordersQuery);
-
-        // Fetch items for each order
-        // Optimization: Could be done with a single large join, but map is cleaner for structure sometimes. 
-        // Given typically admin page pagination, a loop or 'IN' query is fine.
-        // Let's do a separate query using IN for efficiency if orders exist.
+        const [orders] = await db.query(ordersQuery);
 
         if (orders.length === 0) {
             return res.status(200).json([]);
@@ -57,7 +49,7 @@ exports.getAllCustomerOrders = async (req, res) => {
             GROUP BY oi.order_id, oi.isbn
         `;
 
-        const items = await query(itemsQuery, [orderIds]);
+        const [items] = await db.query(itemsQuery, [orderIds]);
 
         // Map items to orders
         const ordersMap = {};
@@ -88,7 +80,7 @@ exports.updateCustomerOrderStatus = async (req, res) => {
 
         if (!status) return res.status(400).json("Status is required.");
 
-        await query("UPDATE customer_orders SET status = ? WHERE order_id = ?", [status, id]);
+        await db.query("UPDATE customer_orders SET status = ? WHERE order_id = ?", [status, id]);
 
         return res.status(200).json("Order status updated successfully.");
     } catch (err) {
@@ -98,7 +90,7 @@ exports.updateCustomerOrderStatus = async (req, res) => {
 
 exports.getLowStockBooks = async (req, res) => {
     try {
-        const books = await query(`
+        const [books] = await db.query(`
             SELECT Books.*, Publishers.Name as publisher, GROUP_CONCAT(Authors.Name SEPARATOR ', ') as authors 
             FROM Books 
             LEFT JOIN Publishers ON Books.publisher_id = Publishers.publisher_id
@@ -119,7 +111,7 @@ exports.getLowStockBooks = async (req, res) => {
 
 exports.getAllPublisherOrders = async (req, res) => {
     try {
-        const orders = await query(`
+        const [orders] = await db.query(`
             SELECT 
                 po.order_id as id,
                 po.isbn,
@@ -152,12 +144,12 @@ exports.placePublisherOrder = async (req, res) => {
         const { isbn, quantity } = req.body;
 
         // Find publisher for the book
-        const book = await query("SELECT publisher_id FROM Books WHERE ISBN = ?", [isbn]);
+        const [book] = await db.query("SELECT publisher_id FROM Books WHERE ISBN = ?", [isbn]);
         if (book.length === 0) return res.status(404).json("Book not found.");
 
         const publisherId = book[0].publisher_id;
 
-        await query(
+        await db.query(
             "INSERT INTO publisher_orders (isbn, publisher_id, quantity, status, order_date) VALUES (?, ?, ?, 'Pending', NOW())",
             [isbn, publisherId, quantity]
         );
@@ -172,28 +164,37 @@ exports.confirmPublisherOrder = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Start transaction
-        await query("START TRANSACTION");
+        const connection = await db.getConnection();
 
-        const order = await query("SELECT * FROM publisher_orders WHERE order_id = ? AND status = 'Pending'", [id]);
-        if (order.length === 0) {
-            await query("ROLLBACK");
-            return res.status(404).json("Order not found or already confirmed.");
+        try {
+            // Start transaction
+            await connection.beginTransaction();
+
+            const [order] = await connection.query("SELECT * FROM publisher_orders WHERE order_id = ? AND status = 'Pending'", [id]);
+            if (order.length === 0) {
+                await connection.rollback();
+                return res.status(404).json("Order not found or already confirmed.");
+            }
+
+            const { isbn, quantity } = order[0];
+
+            // Update order status
+            await connection.query("UPDATE publisher_orders SET status = 'Received' WHERE order_id = ?", [id]);
+
+            // Update book stock
+            await connection.query("UPDATE Books SET Stock = Stock + ? WHERE ISBN = ?", [quantity, isbn]);
+
+            await connection.commit();
+            return res.status(200).json("Order confirmed and stock updated.");
+
+        } catch (innerErr) {
+            await connection.rollback();
+            throw innerErr;
+        } finally {
+            connection.release();
         }
 
-        const { isbn, quantity } = order[0];
-
-        // Update order status
-        await query("UPDATE publisher_orders SET status = 'Received' WHERE order_id = ?", [id]);
-
-        // Update book stock
-        await query("UPDATE Books SET Stock = Stock + ? WHERE ISBN = ?", [quantity, isbn]);
-
-        await query("COMMIT");
-        return res.status(200).json("Order confirmed and stock updated.");
-
     } catch (err) {
-        await query("ROLLBACK");
         return res.status(500).json({ error: err.message });
     }
 };

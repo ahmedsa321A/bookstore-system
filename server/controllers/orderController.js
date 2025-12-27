@@ -1,8 +1,6 @@
 const db = require('../config/db');
-const util = require('util');
 
-const query = util.promisify(db.query).bind(db);
-exports.checkout = (req, res) => {
+exports.checkout = async (req, res) => {
     const userId = req.user.id;
     const { cardNumber, cartItems } = req.body;
 
@@ -14,87 +12,81 @@ exports.checkout = (req, res) => {
         return res.status(400).json("Cart is empty or invalid!");
     }
 
-    db.beginTransaction((err) => {
-        if (err) return res.status(500).json(err);
+    const connection = await db.getConnection();
+
+    try {
+        await connection.beginTransaction();
 
         // 1. Fetch book details for all items to validate price and stock
         // We'll query all relevant books at once
         const isbnList = cartItems.map(item => item.isbn);
         if (isbnList.length === 0) {
-            return db.rollback(() => res.status(400).json("No items to process."));
+            await connection.rollback();
+            return res.status(400).json("No items to process.");
         }
 
         const placeholders = isbnList.map(() => '?').join(',');
         const booksQuery = `SELECT isbn, price, stock FROM books WHERE isbn IN (${placeholders})`;
 
-        db.query(booksQuery, isbnList, (err, books) => {
-            if (err) return db.rollback(() => res.status(500).json(err));
+        const [books] = await connection.query(booksQuery, isbnList);
 
-            // Create a lookup map for books
-            const booksMap = {};
-            books.forEach(b => booksMap[b.isbn] = b);
+        // Create a lookup map for books
+        const booksMap = {};
+        books.forEach(b => booksMap[b.isbn] = b);
 
-            let totalPrice = 0;
-            const validOrderItems = [];
+        let totalPrice = 0;
+        const validOrderItems = [];
 
-            // 2. Validate stock and calculate total
-            for (const item of cartItems) {
-                const book = booksMap[item.isbn];
-                if (!book) {
-                    return db.rollback(() => res.status(404).json(`Book with ISBN ${item.isbn} not found.`));
-                }
-                if (item.quantity <= 0) {
-                    return db.rollback(() => res.status(400).json(`Invalid quantity for book ISBN: ${item.isbn}`));
-                }
-
-                if (book.stock < item.quantity) {
-                    return db.rollback(() => res.status(400).json(`Not enough stock for book ISBN: ${item.isbn}`));
-                }
-
-                totalPrice += book.price * item.quantity;
-                validOrderItems.push({
-                    isbn: item.isbn,
-                    quantity: item.quantity,
-                    price: book.price
-                });
+        // 2. Validate stock and calculate total
+        for (const item of cartItems) {
+            const book = booksMap[item.isbn];
+            if (!book) {
+                await connection.rollback();
+                return res.status(404).json(`Book with ISBN ${item.isbn} not found.`);
+            }
+            if (item.quantity <= 0) {
+                await connection.rollback();
+                return res.status(400).json(`Invalid quantity for book ISBN: ${item.isbn}`);
             }
 
-            // 3. Create Order
-            const orderQuery = "INSERT INTO customer_orders (`customer_id`, `order_date`, `total_price`) VALUES (?, NOW(), ?)";
+            if (book.stock < item.quantity) {
+                await connection.rollback();
+                return res.status(400).json(`Not enough stock for book ISBN: ${item.isbn}`);
+            }
 
-            db.query(orderQuery, [userId, totalPrice], (err, orderResult) => {
-                if (err) return db.rollback(() => res.status(500).json(err));
-
-                const orderId = orderResult.insertId;
-                let processedCount = 0;
-
-                // 4. Insert Order Items and Update Stock
-                // Note: Could optimize this with a bulk insert, but sticking to existing pattern for simplicity/safety first
-                validOrderItems.forEach((item) => {
-                    const itemQuery = "INSERT INTO order_items (`order_id`, `isbn`, `quantity`, `price`) VALUES (?, ?, ?, ?)";
-
-                    db.query(itemQuery, [orderId, item.isbn, item.quantity, item.price], (err) => {
-                        if (err) return db.rollback(() => res.status(500).json(err));
-
-                        const stockQuery = "UPDATE books SET stock = stock - ? WHERE isbn = ?";
-
-                        db.query(stockQuery, [item.quantity, item.isbn], (err) => {
-                            if (err) return db.rollback(() => res.status(500).json(err));
-
-                            processedCount++;
-
-                            if (processedCount === validOrderItems.length) {
-                                db.commit((err) => {
-                                    if (err) return db.rollback(() => res.status(500).json(err));
-                                    return res.status(200).json("Order placed successfully! Transaction Complete.");
-                                });
-                            }
-                        });
-                    });
-                });
+            totalPrice += book.price * item.quantity;
+            validOrderItems.push({
+                isbn: item.isbn,
+                quantity: item.quantity,
+                price: book.price
             });
-        });
-    });
+        }
+
+        // 3. Create Order
+        const orderQuery = "INSERT INTO customer_orders (`customer_id`, `order_date`, `total_price`) VALUES (?, NOW(), ?)";
+        const [orderResult] = await connection.query(orderQuery, [userId, totalPrice]);
+
+        const orderId = orderResult.insertId;
+
+        // 4. Insert Order Items and Update Stock
+        for (const item of validOrderItems) {
+            const itemQuery = "INSERT INTO order_items (`order_id`, `isbn`, `quantity`, `price`) VALUES (?, ?, ?, ?)";
+            await connection.query(itemQuery, [orderId, item.isbn, item.quantity, item.price]);
+
+            const stockQuery = "UPDATE books SET stock = stock - ? WHERE isbn = ?";
+            await connection.query(stockQuery, [item.quantity, item.isbn]);
+        }
+
+        await connection.commit();
+        return res.status(200).json("Order placed successfully! Transaction Complete.");
+
+    } catch (err) {
+        await connection.rollback();
+        console.error("Checkout Error:", err);
+        return res.status(500).json(err);
+    } finally {
+        connection.release();
+    }
 };
 
 exports.getCustomerOrderHistory = async (req, res) => {
@@ -124,12 +116,11 @@ exports.getCustomerOrderHistory = async (req, res) => {
             ORDER BY co.order_date DESC, co.order_id DESC
         `;
 
-        const rows = await query(sql, [userId]);
+        const [rows] = await db.query(sql, [userId]);
 
         if (rows.length === 0) {
             return res.status(200).json([]);
         }
-
 
         const ordersMap = new Map();
 

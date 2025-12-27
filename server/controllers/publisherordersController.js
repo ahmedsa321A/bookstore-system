@@ -1,14 +1,12 @@
 const db = require('../config/db');
-const util = require('util');
 
-const query = util.promisify(db.query).bind(db);
 exports.placePublisherOrder = async (req, res) => {
     try {
         const { isbn } = req.body;
         const CONSTANT_QTY = 50;
 
         // 1. Get Book Details
-        const bookCheck = await query("SELECT publisher_id, Title, Stock, Threshold FROM Books WHERE ISBN = ?", [isbn]);
+        const [bookCheck] = await db.query("SELECT publisher_id, Title, Stock, Threshold FROM Books WHERE ISBN = ?", [isbn]);
 
         if (bookCheck.length === 0) {
             return res.status(404).json("Book not found.");
@@ -28,7 +26,7 @@ exports.placePublisherOrder = async (req, res) => {
         // 3. LOGIC CHECK B: Is there already a PENDING order for this book?
         // =========================================================
         // We join order_items with orders to check if this ISBN exists in any 'Pending' order
-        const duplicateCheck = await query(`
+        const [duplicateCheck] = await db.query(`
             SELECT po.publisher_order_id 
             FROM publisher_orders po
             JOIN publisher_order_items poi ON po.publisher_order_id = poi.publisher_order_id
@@ -42,11 +40,13 @@ exports.placePublisherOrder = async (req, res) => {
             });
         }
 
-        await query("START TRANSACTION");
+        const connection = await db.getConnection();
 
         try {
+            await connection.beginTransaction();
+
             // 4. Create Order Header
-            const orderResult = await query(
+            const [orderResult] = await connection.query(
                 "INSERT INTO publisher_orders (publisher_id, order_date, status) VALUES (?, NOW(), 'Pending')",
                 [book.publisher_id]
             );
@@ -54,12 +54,12 @@ exports.placePublisherOrder = async (req, res) => {
             const orderId = orderResult.insertId;
 
             // 5. Create Order Item
-            await query(
+            await connection.query(
                 "INSERT INTO publisher_order_items (publisher_order_id, isbn, quantity) VALUES (?, ?, ?)",
                 [orderId, isbn, CONSTANT_QTY]
             );
 
-            await query("COMMIT");
+            await connection.commit();
             return res.status(201).json({
                 message: "Order placed successfully.",
                 orderId: orderId,
@@ -67,14 +67,17 @@ exports.placePublisherOrder = async (req, res) => {
             });
 
         } catch (innerErr) {
-            await query("ROLLBACK");
+            await connection.rollback();
             throw innerErr;
+        } finally {
+            connection.release();
         }
 
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
 };
+
 exports.getPublisherOrders = async (req, res) => {
     try {
         const sql = `
@@ -93,7 +96,7 @@ exports.getPublisherOrders = async (req, res) => {
             ORDER BY po.publisher_order_id DESC
         `;
 
-        const rows = await query(sql);
+        const [rows] = await db.query(sql);
 
         const ordersMap = new Map();
 
@@ -124,22 +127,36 @@ exports.confirmPublisherOrder = async (req, res) => {
     try {
         const orderId = req.params.orderId;
 
-        const orderCheck = await query("SELECT status FROM publisher_orders WHERE publisher_order_id = ?", [orderId]);
+        const [orderCheck] = await db.query("SELECT status FROM publisher_orders WHERE publisher_order_id = ?", [orderId]);
         if (orderCheck.length === 0) return res.status(404).json("Order not found.");
 
         if (orderCheck[0].status !== 'Pending') {
             return res.status(400).json(`Cannot confirm order. Current status is ${orderCheck[0].status}.`);
         }
 
-        const items = await query("SELECT isbn, quantity FROM publisher_order_items WHERE publisher_order_id = ?", [orderId]);
+        const connection = await db.getConnection();
 
-        for (const item of items) {
-            await query("UPDATE Books SET Stock = Stock + ? WHERE ISBN = ?", [item.quantity, item.isbn]);
+        try {
+            await connection.beginTransaction();
+
+            const [items] = await connection.query("SELECT isbn, quantity FROM publisher_order_items WHERE publisher_order_id = ?", [orderId]);
+
+            for (const item of items) {
+                await connection.query("UPDATE Books SET Stock = Stock + ? WHERE ISBN = ?", [item.quantity, item.isbn]);
+            }
+
+            await connection.query("UPDATE publisher_orders SET status = 'Confirmed' WHERE publisher_order_id = ?", [orderId]);
+
+            await connection.commit();
+            return res.status(200).json("Order confirmed and stock updated.");
+
+        } catch (innerErr) {
+            await connection.rollback();
+            throw innerErr;
+        } finally {
+            connection.release();
         }
 
-        await query("UPDATE publisher_orders SET status = 'Confirmed' WHERE publisher_order_id = ?", [orderId]);
-
-        return res.status(200).json("Order confirmed and stock updated.");
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -149,14 +166,14 @@ exports.cancelPublisherOrder = async (req, res) => {
     try {
         const orderId = req.params.orderId;
 
-        const orderCheck = await query("SELECT status FROM publisher_orders WHERE publisher_order_id = ?", [orderId]);
+        const [orderCheck] = await db.query("SELECT status FROM publisher_orders WHERE publisher_order_id = ?", [orderId]);
         if (orderCheck.length === 0) return res.status(404).json("Order not found.");
 
         if (orderCheck[0].status !== 'Pending') {
             return res.status(400).json(`Cannot cancel order. Current status is ${orderCheck[0].status}.`);
         }
 
-        await query("UPDATE publisher_orders SET status = 'Cancelled' WHERE publisher_order_id = ?", [orderId]);
+        await db.query("UPDATE publisher_orders SET status = 'Cancelled' WHERE publisher_order_id = ?", [orderId]);
 
         return res.status(200).json("Order cancelled successfully.");
     } catch (err) {

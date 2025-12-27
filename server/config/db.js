@@ -1,24 +1,17 @@
 const mysql = require('mysql2');
-const dotenv = require('dotenv');
-const path = require('path');
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config();
 
-const dp = mysql.createConnection({
+const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    database: process.env.DB_NAME
-});
-
-
-dp.connect((err) => {
-    if (err) {
-        console.error("error");
-    }
-    else {
-        console.log("connected");
+    database: process.env.DB_NAME || 'bookstore',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    ssl: {
+        rejectUnauthorized: false
     }
 });
 
-module.exports = dp;
-
+module.exports = pool.promise();

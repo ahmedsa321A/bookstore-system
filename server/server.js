@@ -7,12 +7,12 @@ const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
 const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const reportsRoutes = require('./routes/adminRoutes'); 
+const adminRoutes = require('./routes/adminRoutes'); // This actually contains report routes
+
 
 const allowedOrigins = [
-  "http://localhost:5173",                  
-  "https://bookstore-eight-beige.vercel.app"    
+    "http://localhost:5173",
+    "https://bookstore-eight-beige.vercel.app"
 ];
 
 const app = express();
@@ -30,8 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/reports', reportsRoutes);
+app.use('/api/admin', adminRoutes); // Admin reports
 
 
 app.use((req, res) => {
