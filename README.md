@@ -27,9 +27,10 @@ The **Online Bookstore System** is designed to simulate a real-world e-commerce 
 *   **Analytics Dashboard**: View sales data, top customers, and best-selling books.
 
 
-### 🤖 Machine Learning Service(comming soon...)
-*   **Content-Based Recommendations**: Suggests books based on similarity (TF-IDF analysis of Title, Category, and Authors).
-*   **Python/Flask API**: A dedicated microservice handling recommendation logic.
+### 🤖 Machine Learning Service
+<!-- *   **Content-Based Recommendations**: Suggests books based on similarity (TF-IDF analysis of Title, Category, and Authors).
+*   **Python/Flask API**: A dedicated microservice handling recommendation logic. -->
+*   **COMING SOON**
 
 ## 🛠️ Tech Stack
 
