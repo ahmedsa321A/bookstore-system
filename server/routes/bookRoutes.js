@@ -10,6 +10,7 @@ const router = express.Router();
 
 router.get('/', bookController.searchBooks); // Defaulting to search as getBooks is gone/renamed
 router.get('/search', bookController.searchBooks);
+router.get('/authors', bookController.getAllAuthors);
 
 router.post('/add', verifyToken, verifyAdmin, validateAddBook, bookControllerAdmin.addBook);
 router.put('/update/:isbn', verifyToken, verifyAdmin, validateModifyBook, bookControllerAdmin.modifyBook);

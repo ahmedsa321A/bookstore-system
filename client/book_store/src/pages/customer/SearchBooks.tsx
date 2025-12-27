@@ -28,6 +28,12 @@ export function SearchBooks() {
     queryFn: bookService.getPublishers,
   });
 
+  // Fetch authors
+  const { data: authorsList = [] } = useQuery({
+    queryKey: ['authors'],
+    queryFn: bookService.getAuthors,
+  });
+
   // Debounce search query to avoid too many requests
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -55,7 +61,7 @@ export function SearchBooks() {
   const totalPages = data?.totalPages || 1;
   const totalResults = data?.total || 0;
 
-  const authors = ['All', ...Array.from(new Set(books.flatMap((b) => b.authors || [])))];
+
 
   if (isLoading) return <Loading size="large" color="#4A90E2" />;
   if (error) return <div className="text-center py-16 text-red-500">Error loading books. Please try again.</div>;
@@ -110,10 +116,13 @@ export function SearchBooks() {
           name="author"
           bgColor='bg-white'
           value={selectedAuthor}
-          options={authors.map((author) => ({
-            label: author,
-            value: author,
-          }))}
+          options={[
+            { label: "All Authors", value: "All" },
+            ...authorsList.map((author) => ({
+              label: author.name,
+              value: author.name,
+            })),
+          ]}
           onChange={(e) => {
             setSelectedAuthor(e.target.value);
             setCurrentPage(1);
@@ -200,10 +209,10 @@ export function SearchBooks() {
                     onClick={() => typeof item === 'number' && setCurrentPage(item)}
                     disabled={typeof item !== 'number'}
                     className={`px-3 py-1 rounded border ${item === currentPage
-                        ? 'bg-primary text-white'
-                        : typeof item === 'number'
-                          ? 'bg-white hover:bg-gray-50'
-                          : 'bg-transparent border-none cursor-default'
+                      ? 'bg-primary text-white'
+                      : typeof item === 'number'
+                        ? 'bg-white hover:bg-gray-50'
+                        : 'bg-transparent border-none cursor-default'
                       }`}
                   >
                     {item}

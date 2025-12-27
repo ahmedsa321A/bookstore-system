@@ -88,3 +88,14 @@ exports.searchBooks = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+exports.getAllAuthors = async (req, res) => {
+  try {
+    const queryStr = "SELECT * FROM Authors ORDER BY Name ASC";
+    const [authors] = await db.promise().query(queryStr);
+    return res.status(200).json(authors);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+};
