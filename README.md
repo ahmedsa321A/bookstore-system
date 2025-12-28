@@ -1,43 +1,42 @@
 # Online Bookstore System
 
-> A comprehensive full-stack e-commerce platform for browsing, purchasing, and managing books, featuring a modern React frontend, a robust Node.js backend, and a Python-based recommendation engine.
+> A comprehensive full-stack e-commerce platform for browsing, purchasing, and managing books, built with a modern React frontend and a robust Node.js backend.
 
+[![Live Demo](https://img.shields.io/badge/demo-online-green.svg)](https://bookstore-eight-beige.vercel.app)
 ![Project Status](https://img.shields.io/badge/status-active-success.svg)
 ![License](https://img.shields.io/badge/license-ISC-blue.svg)
 
+## 🌐 Live Demo
+**[https://bookstore-eight-beige.vercel.app](https://bookstore-eight-beige.vercel.app)**
+
 ## 📖 Project Overview
 
-The **Online Bookstore System** is designed to simulate a real-world e-commerce environment. It facilitates seamless interaction between **Customers** (who browse and buy books) and **Administrators** (who manage inventory and orders). The system ensures data integrity with MySQL transactions, provides real-time stock management with automated triggers, and offers personalized book recommendations.
+The **Online Bookstore System** is designed to simulate a real-world e-commerce environment. It facilitates seamless interaction between **Customers** (who browse and buy books) and **Administrators** (who manage inventory and orders). The system ensures data integrity with MySQL transactions, provides real-time stock management with automated triggers, and offers a smooth user experience.
 
 ## ✨ Features
 
 ### 🛍️ Customer Module
 *   **Book Catalog**: Browse a wide range of books with advanced filtering (Category, Author, Price).
-*   **Search**: Real-time search by title, author, or ISBN.
+*   **Search**: Real-time search by title or ISBN with dynamic pagination.
 *   **Shopping Cart**: Manage items locally before checkout.
-*   **Secure Checkout**: Atomic transactions ensure stock is reserved and orders are processed securely.
+*   **Secure Checkout**: Atomic transactions ensure stock is reserved and orders are processed securely with credit card validation.
 *   **Order History**: View past purchases and status.
+*   **User Profile**: Manage personal details and shipping address.
 
 ### 🛡️ Admin Module
-*   **Inventory Management**: Add, update, or remove books and authors.
+*   **Inventory Management**: Add, update, or remove books and authors using Unsplash for cover images.
 *   **Smart Procurement**:
     *   **Auto-Stock Triggers**: Automatically generates publisher orders when stock falls below a threshold.
     *   **Negative Stock Protection**: Database triggers prevent invalid stock updates.
 *   **Publisher Management**: Manage publisher relationships and orders.
 *   **Analytics Dashboard**: View sales data, top customers, and best-selling books.
 
-
-### 🤖 Machine Learning Service
-<!-- *   **Content-Based Recommendations**: Suggests books based on similarity (TF-IDF analysis of Title, Category, and Authors).
-*   **Python/Flask API**: A dedicated microservice handling recommendation logic. -->
-*   **COMING SOON**
-
 ## 🛠️ Tech Stack
 
-*   **Frontend**: React.js (Vite), TailwindCSS, Redux Toolkit
+*   **Frontend**: React.js (Vite), TypeScript, TailwindCSS, Redux Toolkit, React Query
 *   **Backend**: Node.js, Express.js
 *   **Database**: MySQL (Relational Schema, Triggers, ACID Transactions)
-*   **ML Service**: Python, Flask, Scikit-learn, Pandas
+*   **Deployment**: Vercel (Frontend), Azure App Service (Backend), Azure Database for MySQL
 
 ---
 
@@ -47,17 +46,12 @@ Follow these steps to get the project running on your local machine.
 
 ### Prerequisites
 *   **Node.js** (v18+)
-*   **Python** (v3.8+)
 *   **MySQL Server**
 
 ### 1. Database Setup
 1.  Open your MySQL client (Workbench, CLI, etc.).
 2.  Create a database named `bookstore`.
-3.  Import the schema and data:
-    ```sql
-    source database/BookstoreDB.sql
-    ```
-    *This script creates the tables, triggers (`prevent_negative_stock`, `auto_reorder_books`), and seeds initial data.*
+3.  Import the schema and seed data.
 
 ### 2. Backend Server
 1.  Navigate to the server directory:
@@ -97,21 +91,6 @@ Follow these steps to get the project running on your local machine.
     npm run dev
     ```
     *Client runs on `http://localhost:5173`*
-
-### 4. Recommendation Service (Optional)
-1.  Navigate to the ML service directory:
-    ```bash
-    cd server/ml_service
-    ```
-2.  Install Python requirements:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  Start the Flask app:
-    ```bash
-    python app.py
-    ```
-    *Service runs on `http://localhost:5000`*
 
 ## 📚 API Documentation
 
