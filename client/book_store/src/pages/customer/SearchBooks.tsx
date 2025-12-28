@@ -181,14 +181,31 @@ export function SearchBooks() {
               </button>
 
               {(() => {
-                // Generate page numbers: First 3, Last 2, and Current
-                const pageSet = new Set([
-                  1, 2, 3,
-                  totalPages - 1, totalPages,
-                  currentPage
-                ]);
+                // Logic:
+                // 1. Always show neighbors of current page (e.g., current-1, current, current+1) -> "3 pages in range"
+                // 2. Always show the last 2 pages (totalPages-1, totalPages)
+                // 3. Handle ellipses
 
-                const sortedPages = Array.from(pageSet)
+                const rangeSize = 1; // 1 neighbor on each side -> 3 pages total (prev, curr, next)
+                const pages = new Set<number>();
+
+                // Add Range around Current Page
+                for (let i = currentPage - rangeSize; i <= currentPage + rangeSize; i++) {
+                  if (i > 0 && i <= totalPages) {
+                    pages.add(i);
+                  }
+                }
+
+                // Add Last 2 Pages
+                if (totalPages > 1) pages.add(totalPages - 1);
+                pages.add(totalPages);
+
+                // Add First Page (optional but good UX, though user specifically asked for "last 2 pages" and "range")
+                // Adding Page 1 usually makes sense to avoid [4, 5 ... 10, 11] without knowing it starts at 1.
+                // But adhering strictly to "3 pages in range" + "last 2 pages"
+                pages.add(1);
+
+                const sortedPages = Array.from(pages)
                   .filter((p) => p >= 1 && p <= totalPages)
                   .sort((a, b) => a - b);
 

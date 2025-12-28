@@ -64,6 +64,8 @@ exports.login = async (req, res) => {
 
         res.cookie("access_token", token, {
             httpOnly: true,
+            sameSite: "none",
+            secure: true
         }).status(200).json(otherInfo);
     } catch (err) {
         console.error("Login Error:", err);
