@@ -65,7 +65,8 @@ exports.login = async (req, res) => {
         res.cookie("access_token", token, {
             httpOnly: true,
             sameSite: "none",
-            secure: true
+            secure: true,
+            partitioned: true
         }).status(200).json(otherInfo);
     } catch (err) {
         console.error("Login Error:", err);
@@ -76,7 +77,8 @@ exports.login = async (req, res) => {
 exports.logout = (req, res) => {
     res.clearCookie("access_token", {
         sameSite: "none",
-        secure: true
+        secure: true,
+        partitioned: true
     });
 
     return res.status(200).json("User has been logged out.");
