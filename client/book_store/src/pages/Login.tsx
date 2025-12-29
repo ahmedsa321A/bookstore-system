@@ -37,7 +37,7 @@ export function Login() {
 
   useEffect(() => {
     if (user) {
-      if (user.role === "ADMIN") {
+      if (user.role.toUpperCase() === "ADMIN") {
         navigate("/admin");
       } else {
         navigate("/customer");
@@ -77,7 +77,7 @@ export function Login() {
         title: "Login Successful",
         message: `Welcome back, ${user.first_name}!`,
       });
-      if (user.role === "ADMIN") {
+      if (user.role.toUpperCase() === "ADMIN") {
         setTimeout(() => {
           navigate("/admin/dashboard");
 
