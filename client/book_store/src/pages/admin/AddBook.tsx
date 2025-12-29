@@ -34,6 +34,8 @@ export function AddBook() {
     image: '',
   });
 
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> | { target: { name: string; value: string } }
   ) => {
@@ -114,20 +116,26 @@ export function AddBook() {
       return;
     }
 
-    const payload = {
-      isbn: formData.isbn.replace(/-/g, ''),
-      title: formData.title,
-      publication_year: formData.publicationYear,
-      price: parseFloat(formData.price),
-      stock: parseInt(formData.stockQuantity),
-      threshold: parseInt(formData.thresholdQuantity),
-      publisher_id: parseInt(formData.publisher),
-      category: formData.category,
-      author: formData.authors,
-      image: formData.image,
-    };
+    const formDataToSend = new FormData();
+    formDataToSend.append('isbn', formData.isbn.replace(/-/g, ''));
+    formDataToSend.append('title', formData.title);
+    formDataToSend.append('publication_year', formData.publicationYear.toString());
+    formDataToSend.append('price', formData.price);
+    formDataToSend.append('stock', formData.stockQuantity);
+    formDataToSend.append('threshold', formData.thresholdQuantity);
+    formDataToSend.append('publisher_id', formData.publisher);
+    formDataToSend.append('category', formData.category);
+    formDataToSend.append('image', formData.image);
 
-    addMutation.mutate(payload);
+    formData.authors.forEach((author) => {
+      formDataToSend.append('author', author);
+    });
+
+    if (pdfFile) {
+      formDataToSend.append('pdf', pdfFile);
+    }
+
+    addMutation.mutate(formDataToSend);
   };
 
   const handleAuthorChange = (index: number, value: string) => {
@@ -180,6 +188,13 @@ export function AddBook() {
       });
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPdfFile(file);
     }
   };
 
@@ -379,6 +394,22 @@ export function AddBook() {
                   <img src={formData.image} alt="Book Preview" className="h-32 w-auto object-cover rounded border" />
                 </div>
               )}
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block mb-2 text-sm font-medium text-gray-700">Book PDF</label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handlePdfUpload}
+                className="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-primary file:text-white
+                hover:file:bg-primary/90"
+              />
+              {pdfFile && <p className="text-sm text-green-600 mt-1">Selected: {pdfFile.name}</p>}
             </div>
             <div className="md:col-span-2">
               <button

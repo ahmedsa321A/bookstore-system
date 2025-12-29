@@ -1,7 +1,10 @@
 const db = require('../config/db');
 
+
 exports.addBook = async (req, res) => {
     try {
+        const pdfFilename = req.file ? req.file.filename : null;
+
         const {
             isbn,
             title,
@@ -15,11 +18,10 @@ exports.addBook = async (req, res) => {
             author,
         } = req.body;
 
-        const [existingBooks] = await db.query("SELECT * FROM Books WHERE ISBN = ?", [
-            isbn,
-        ]);
-        if (existingBooks.length > 0)
+        const [existingBooks] = await db.query("SELECT * FROM books WHERE isbn = ?", [isbn]);
+        if (existingBooks.length > 0) {
             return res.status(409).json("Book with this ISBN already exists!");
+        }
 
         const connection = await db.getConnection();
 
@@ -41,25 +43,24 @@ exports.addBook = async (req, res) => {
                 }
             }
 
-            // 2. Handle Publisher
             let finalPublisherId = publisher_id;
             if (!finalPublisherId && req.body.publisher) {
-                // Check publisher existence (lowercase keys based on schema check)
-                const [existingPublisher] = await connection.query("SELECT publisher_id FROM Publishers WHERE Name = ?", [req.body.publisher]);
+                const [existingPublisher] = await connection.query("SELECT publisher_id FROM publishers WHERE name = ?", [req.body.publisher]);
                 if (existingPublisher.length > 0) {
                     finalPublisherId = existingPublisher[0].publisher_id;
                 } else {
-                    const [result] = await connection.query("INSERT INTO Publishers (Name, Address, Phone) VALUES (?, ?, ?)", [req.body.publisher, 'Unknown', 'Unknown']);
+                    const [result] = await connection.query("INSERT INTO publishers (name, address, phone) VALUES (?, ?, ?)", [req.body.publisher, 'Unknown', 'Unknown']);
                     finalPublisherId = result.insertId;
                 }
             }
 
-            // 3. Handle Image
             const finalImage = image || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&q=80&w=2730&ixlib=rb-4.0.3';
 
-            // 4. Insert Book
-            const insertQuery =
-                "INSERT INTO Books (ISBN, Title, publication_year, Price, Stock, Threshold, publisher_id, Category, Image) VALUES (?)";
+            const insertQuery = `
+                INSERT INTO books 
+                (isbn, title, publication_year, price, stock, threshold, publisher_id, category, image, pdf_path) 
+                VALUES (?)
+            `;
 
             const values = [
                 isbn,
@@ -71,17 +72,17 @@ exports.addBook = async (req, res) => {
                 finalPublisherId,
                 category,
                 finalImage,
+                pdfFilename 
             ];
 
             await connection.query(insertQuery, [values]);
 
-            // 5. Link Book and Authors
             for (const authId of authorIds) {
                 await connection.query("INSERT INTO bookauthors (isbn, author_id) VALUES (?, ?)", [isbn, authId]);
             }
 
             await connection.commit();
-            return res.status(201).json("Book added successfully!");
+            return res.status(201).json("Book added successfully with PDF!");
 
         } catch (innerErr) {
             await connection.rollback();
@@ -94,6 +95,7 @@ exports.addBook = async (req, res) => {
         if (err.code === 'ER_NO_REFERENCED_ROW_2') {
             return res.status(400).json({ error: "Invalid Publisher ID. This publisher does not exist." });
         }
+        console.error("Add Book Error:", err);
         return res.status(500).json({ error: err.message });
     }
 };

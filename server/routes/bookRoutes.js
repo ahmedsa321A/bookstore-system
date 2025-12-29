@@ -4,6 +4,7 @@ const bookControllerAdmin = require('../controllers/bookControllerAdmin');
 const verifyToken = require('../middleware/verifyToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 const { validateAddBook, validateModifyBook } = require('../middleware/bookValidation');
+const upload = require('../config/uploads');
 const { getPublisherOrders, confirmPublisherOrder, cancelPublisherOrder, placePublisherOrder } = require('../controllers/publisherordersController');
 
 const router = express.Router();
@@ -12,7 +13,7 @@ router.get('/', bookController.searchBooks); // Defaulting to search as getBooks
 router.get('/search', bookController.searchBooks);
 router.get('/authors', bookController.getAllAuthors);
 
-router.post('/add', verifyToken, verifyAdmin, validateAddBook, bookControllerAdmin.addBook);
+router.post('/add', verifyToken, verifyAdmin, upload.single('pdf'), validateAddBook, bookControllerAdmin.addBook);
 router.put('/update/:isbn', verifyToken, verifyAdmin, validateModifyBook, bookControllerAdmin.modifyBook);
 router.delete('/delete/:isbn', verifyToken, verifyAdmin, bookControllerAdmin.deleteBook);
 router.post('/addAuthor', verifyToken, verifyAdmin, bookControllerAdmin.addAuthor);
