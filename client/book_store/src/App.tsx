@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import Loading from './components/Loading';
@@ -21,52 +21,54 @@ export default function App() {
   }, [dispatch]);
 
   if (loading) {
-    return <Loading size="large"  color="#4A90E2" />;
+    return <Loading size="large" color="#4A90E2" />;
   }
 
   return (
     <Router>
-      <Routes>
-        {/* Public Routes */}
-        {publicRoutes.map((route) => (
-          <Route key={route.path} {...route} />
-        ))}
+      <Suspense fallback={<Loading size="large" color="#4A90E2" />}>
+        <Routes>
+          {/* Public Routes */}
+          {publicRoutes.map((route) => (
+            <Route key={route.path} {...route} />
+          ))}
 
-        {/* Admin Routes */}
-        <Route element={<ProtectedRoute allowedRole="ADMIN" />}>
-          <Route
-            path={adminRoutes.path}
-            element={adminRoutes.element}
-          >
-            {adminRoutes.children.map((child) => (
-              <Route key={child.path ?? 'index'} {...child} />
-            ))}
+          {/* Admin Routes */}
+          <Route element={<ProtectedRoute allowedRole="ADMIN" />}>
+            <Route
+              path={adminRoutes.path}
+              element={adminRoutes.element}
+            >
+              {adminRoutes.children.map((child) => (
+                <Route key={child.path ?? 'index'} {...child} />
+              ))}
+            </Route>
           </Route>
-        </Route>
 
-        {/* Customer Routes */}
-        <Route element={<ProtectedRoute allowedRole="CUSTOMER" />}>
-          <Route
-            path={customerRoutes.path}
-            element={customerRoutes.element}
-          >
-            {customerRoutes.children.map((child) => (
-              <Route key={child.path ?? 'index'} {...child} />
-            ))}
+          {/* Customer Routes */}
+          <Route element={<ProtectedRoute allowedRole="CUSTOMER" />}>
+            <Route
+              path={customerRoutes.path}
+              element={customerRoutes.element}
+            >
+              {customerRoutes.children.map((child) => (
+                <Route key={child.path ?? 'index'} {...child} />
+              ))}
+            </Route>
           </Route>
-        </Route>
 
-        {/* Book Details - Outside layouts for flexibility */}
-        <Route element={<ProtectedRoute allowedRole="CUSTOMER" />}>
-          <Route path="/book/:isbn" element={<div className="min-h-screen bg-secondary/30">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <BookDetails />
-            </div>
-          </div>}
-          />
-        </Route>
-        
-      </Routes>
+          {/* Book Details - Outside layouts for flexibility */}
+          <Route element={<ProtectedRoute allowedRole="CUSTOMER" />}>
+            <Route path="/book/:isbn" element={<div className="min-h-screen bg-secondary/30">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <BookDetails />
+              </div>
+            </div>}
+            />
+          </Route>
+
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

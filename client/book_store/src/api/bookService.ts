@@ -1,6 +1,7 @@
 
 import api from './axios';
 import type { Book } from '../types/book';
+import { AxiosError } from 'axios';
 
 export interface BookSearchFilters {
     isbn?: string;
@@ -10,11 +11,66 @@ export interface BookSearchFilters {
     publisher?: string;
 }
 
-const transformBook = (data: any): Book => {
+// Define DTOs (Data Transfer Objects) mirroring backend JSON
+export interface BookResponseDTO {
+    isbn: string;
+    title: string;
+    authors: string | string[]; 
+    publisher_name?: string;
+    publisher_id?: number;
+    publication_year: number;
+    price: string | number;
+    category: 'Science' | 'Art' | 'Religion' | 'History' | 'Geography';
+    stock: number;
+    threshold: number;
+    image?: string;
+    featured?: boolean;
+}
+
+export interface ApiBookSearchResponse {
+    books: BookResponseDTO[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+export interface AddBookRequest {
+    isbn: string;
+    title: string;
+    category: string;
+    price: number;
+    stock: number;
+    threshold: number;
+    publisher: string;
+    authors: string[];
+    publicationYear: number;
+    image?: string;
+}
+
+export interface AddPublisherRequest {
+    name: string;
+    address?: string;
+    phone?: string;
+}
+
+export interface PublisherDTO {
+    publisher_id: number;
+    name: string;
+}
+
+export interface AuthorDTO {
+    author_id: number;
+    name: string;
+}
+
+const transformBook = (data: BookResponseDTO): Book => {
     return {
         isbn: data.isbn,
         title: data.title,
-        authors: Array.isArray(data.authors) ? data.authors : (data.authors || '').split(',').filter(Boolean),
+        authors: Array.isArray(data.authors)
+            ? data.authors
+            : (data.authors || '').split(',').map(s => s.trim()).filter(Boolean),
         publisher: data.publisher_name || 'Unknown Publisher',
         publisher_name: data.publisher_name,
         publisher_id: data.publisher_id,
@@ -24,7 +80,7 @@ const transformBook = (data: any): Book => {
         stockQuantity: data.stock,
         thresholdQuantity: data.threshold,
         image: data.image || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=1080&auto=format&fit=crop',
-        featured: false, // Default
+        featured: data.featured || false,
     };
 };
 
@@ -49,9 +105,10 @@ const bookService = {
         if (filters.limit) params.append('limit', filters.limit.toString());
 
         try {
-            const response = await api.get<{ books: any[]; total: number; page: number; limit: number; totalPages: number }>(`/books/search?${params.toString()}`);
+            const response = await api.get<ApiBookSearchResponse | BookResponseDTO[]>(`/books/search?${params.toString()}`);
 
-            if (response.data && Array.isArray(response.data.books)) {
+            // Handle Standard Pagination Response
+            if ('books' in response.data && Array.isArray(response.data.books)) {
                 return {
                     books: response.data.books.map(transformBook),
                     total: response.data.total,
@@ -61,20 +118,23 @@ const bookService = {
                 };
             }
 
+            // Handle Array Response (Legacy fallback)
             if (Array.isArray(response.data)) {
                 return {
-                    books: (response.data as any[]).map(transformBook),
-                    total: (response.data as any[]).length,
+                    books: response.data.map(transformBook),
+                    total: response.data.length,
                     page: 1,
-                    limit: (response.data as any[]).length,
+                    limit: response.data.length,
                     totalPages: 1
                 };
             }
 
+            // Default Empty
             return { books: [], total: 0, page: 1, limit: 10, totalPages: 1 };
 
-        } catch (error: any) {
-            if (error.response && error.response.status === 404) {
+        } catch (error) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response && axiosError.response.status === 404) {
                 return { books: [], total: 0, page: 1, limit: 10, totalPages: 1 };
             }
             throw error;
@@ -82,12 +142,12 @@ const bookService = {
     },
 
     // POST /api/books/add
-    addBook: async (data: any): Promise<void> => {
+    addBook: async (data: AddBookRequest): Promise<void> => {
         await api.post('/books/add', data);
     },
 
     // PUT /api/books/update/:isbn
-    updateBook: async (isbn: string, data: any): Promise<void> => {
+    updateBook: async (isbn: string, data: Partial<AddBookRequest>): Promise<void> => {
         await api.put(`/books/update/${isbn}`, data);
     },
 
@@ -102,20 +162,20 @@ const bookService = {
     },
 
     // POST /api/books/addPublisher
-    addPublisher: async (data: { name: string; address?: string; phone?: string }): Promise<void> => {
+    addPublisher: async (data: AddPublisherRequest): Promise<void> => {
         await api.post('/books/addPublisher', data);
     },
 
     // GET /api/books/publishers
-    getPublishers: async (): Promise<{ publisher_id: number, name: string }[]> => {
-        const response = await api.get('/books/publishers');
-        return response.data as { publisher_id: number, name: string }[];
+    getPublishers: async (): Promise<PublisherDTO[]> => {
+        const response = await api.get<PublisherDTO[]>('/books/publishers');
+        return response.data;
     },
 
     // GET /api/books/authors
-    getAuthors: async (): Promise<{ author_id: number, name: string }[]> => {
-        const response = await api.get('/books/authors');
-        return response.data as { author_id: number, name: string }[];
+    getAuthors: async (): Promise<AuthorDTO[]> => {
+        const response = await api.get<AuthorDTO[]>('/books/authors');
+        return response.data;
     },
 
 };

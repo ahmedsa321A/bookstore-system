@@ -1,9 +1,10 @@
 import { Navigate } from 'react-router-dom';
+import { lazy } from 'react';
 
-import { LandingPage } from '../pages/LandingPage';
-import { Login } from '../pages/Login';
-import { Signup } from '../pages/Signup';
-import { Unauthorized } from '../pages/Unauthorized';
+const LandingPage = lazy(() => import('../pages/LandingPage').then(module => ({ default: module.LandingPage })));
+const Login = lazy(() => import('../pages/Login').then(module => ({ default: module.Login })));
+const Signup = lazy(() => import('../pages/Signup').then(module => ({ default: module.Signup })));
+const Unauthorized = lazy(() => import('../pages/Unauthorized').then(module => ({ default: module.Unauthorized })));
 
 export const publicRoutes = [
   { path: '/', element: <LandingPage /> },

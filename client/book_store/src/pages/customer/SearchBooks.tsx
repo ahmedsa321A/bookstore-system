@@ -1,67 +1,35 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { BookCard } from '../../components/BookCard';
 import { useAppDispatch } from '../../store/hooks';
 import { addToCart } from '../../store/slices/cartSlice';
 import FormSelect from '../../components/FormSelect';
-import bookService from '../../api/bookService';
 import Loading from '../../components/Loading';
-import { useDebounce } from '../../hooks/useDebounce';
-
-const ITEMS_PER_PAGE = 6;
+import { useBookSearch } from '../../hooks/useBookSearch';
 
 export function SearchBooks() {
   const dispatch = useAppDispatch();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedPublisher, setSelectedPublisher] = useState('All');
-  const [selectedAuthor, setSelectedAuthor] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    searchQuery,
+    selectedCategory,
+    selectedPublisher,
+    selectedAuthor,
+    currentPage,
+    books,
+    totalPages,
+    totalResults,
+    publishersList,
+    authorsList,
+    isLoading,
+    error,
+    setSearchQuery,
+    setSelectedCategory,
+    setSelectedPublisher,
+    setSelectedAuthor,
+    setCurrentPage
+  } = useBookSearch();
 
   const categories = ['All', 'Science', 'Art', 'Religion', 'History', 'Geography'];
-
-  // Fetch publishers
-  const { data: publishersList = [] } = useQuery({
-    queryKey: ['publishers'],
-    queryFn: bookService.getPublishers,
-  });
-
-  // Fetch authors
-  const { data: authorsList = [] } = useQuery({
-    queryKey: ['authors'],
-    queryFn: bookService.getAuthors,
-  });
-
-  // Debounce search query to avoid too many requests
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-  // Fetch books from backend
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['books', debouncedSearchQuery, selectedCategory, selectedPublisher, selectedAuthor, currentPage],
-    queryFn: () => {
-      // If query contains letters, treat as title. If it's only numbers/dashes, treat as ISBN.
-      const isIsbn = /^[0-9-]+$/.test(debouncedSearchQuery);
-
-      return bookService.searchBooks({
-        title: !isIsbn ? debouncedSearchQuery : undefined,
-        isbn: isIsbn ? debouncedSearchQuery : undefined,
-        category: selectedCategory !== 'All' ? selectedCategory : undefined,
-        publisher: selectedPublisher !== 'All' ? selectedPublisher : undefined,
-        author: selectedAuthor !== 'All' ? selectedAuthor : undefined,
-        page: currentPage,
-        limit: ITEMS_PER_PAGE
-      });
-    },
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching new page
-  });
-
-  const books = data?.books || [];
-  const totalPages = data?.totalPages || 1;
-  const totalResults = data?.total || 0;
-
-
 
   if (isLoading) return <Loading size="large" color="#4A90E2" />;
   if (error) return <div className="text-center py-16 text-red-500">Error loading books. Please try again.</div>;
@@ -83,10 +51,7 @@ export function SearchBooks() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1); // Reset to page 1 on search
-            }}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by title or ISBN..."
             className="w-full pl-12 pr-4 py-3 bg-white rounded-lg border border-border focus:border-primary focus:outline-none"
           />
@@ -105,10 +70,7 @@ export function SearchBooks() {
             label: cat,
             value: cat,
           }))}
-          onChange={(e) => {
-            setSelectedCategory(e.target.value);
-            setCurrentPage(1);
-          }}
+          onChange={(e) => setSelectedCategory(e.target.value)}
         />
         <FormSelect
           label="Author"
@@ -123,10 +85,7 @@ export function SearchBooks() {
               value: author.name,
             })),
           ]}
-          onChange={(e) => {
-            setSelectedAuthor(e.target.value);
-            setCurrentPage(1);
-          }}
+          onChange={(e) => setSelectedAuthor(e.target.value)}
         />
 
         <FormSelect
@@ -142,10 +101,7 @@ export function SearchBooks() {
               value: pub.name,
             })),
           ]}
-          onChange={(e) => {
-            setSelectedPublisher(e.target.value);
-            setCurrentPage(1);
-          }}
+          onChange={(e) => setSelectedPublisher(e.target.value)}
         />
       </div>
 
@@ -181,28 +137,17 @@ export function SearchBooks() {
               </button>
 
               {(() => {
-                // Logic:
-                // 1. Always show neighbors of current page (e.g., current-1, current, current+1) -> "3 pages in range"
-                // 2. Always show the last 2 pages (totalPages-1, totalPages)
-                // 3. Handle ellipses
-
-                const rangeSize = 1; // 1 neighbor on each side -> 3 pages total (prev, curr, next)
+                const rangeSize = 1;
                 const pages = new Set<number>();
 
-                // Add Range around Current Page
                 for (let i = currentPage - rangeSize; i <= currentPage + rangeSize; i++) {
                   if (i > 0 && i <= totalPages) {
                     pages.add(i);
                   }
                 }
 
-                // Add Last 2 Pages
                 if (totalPages > 1) pages.add(totalPages - 1);
                 pages.add(totalPages);
-
-                // Add First Page (optional but good UX, though user specifically asked for "last 2 pages" and "range")
-                // Adding Page 1 usually makes sense to avoid [4, 5 ... 10, 11] without knowing it starts at 1.
-                // But adhering strictly to "3 pages in range" + "last 2 pages"
                 pages.add(1);
 
                 const sortedPages = Array.from(pages)
